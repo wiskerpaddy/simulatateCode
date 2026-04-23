@@ -1,6 +1,44 @@
+let keyboardEffectTimer = null;
+
+// --- 鍵盤生成を関数化 ---
+function initKeyboard() {
+    const visualPiano = document.getElementById('visual-piano');
+    if (!visualPiano) return;
+
+    const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    let whiteKeyCount = 0;
+    const whiteKeyWidth = 40; // ここを調整すると鍵盤の幅が変わります
+
+    visualPiano.innerHTML = ''; // クリア
+
+    for (let oct = 2; oct <= 4; oct++) {
+        notes.forEach((note) => {
+            if (oct === 4 && !["C", "C#", "D"].includes(note)) return;
+
+            const isBlack = note.includes('#');
+            const el = document.createElement('div');
+            el.className = isBlack ? 'black-key' : 'white-key';
+            el.dataset.note = note + oct;
+
+            if (isBlack) {
+                el.style.left = (whiteKeyCount * whiteKeyWidth - 13) + "px";
+            } else {
+                el.style.left = (whiteKeyCount * whiteKeyWidth) + "px";
+                whiteKeyCount++;
+            }
+            visualPiano.appendChild(el);
+        });
+    }
+    // コンテナの幅を whiteKeyCount に合わせて固定
+    visualPiano.style.width = (whiteKeyCount * whiteKeyWidth) + "px";
+}
+
+// ページ読み込み完了時に実行
+document.addEventListener('DOMContentLoaded', initKeyboard);
+
 // --- 1. 音源設定 ---
 const reverb = new Tone.Reverb(1.5).toDestination();
-
+let effectTimer = null; // タイマー管理用変数
 // 【本物のピアノ】
 const piano = new Tone.Sampler({
     urls: { "A1": "A1.mp3", "A2": "A2.mp3", "A3": "A3.mp3", "A4": "A4.mp3" },
@@ -152,34 +190,52 @@ keys.forEach(key => {
     key.addEventListener('mouseup', endAction);
 });
 
-// --- playChord関数内の修正 ---
 function playChord(root, quality) {
-    currentInstrument.releaseAll();
-    document.querySelectorAll('.white-key, .black-key').forEach(k => k.classList.remove('key-active'));
+    // 1. 鍵盤用のタイマーをリセット
+    if (keyboardEffectTimer) clearTimeout(keyboardEffectTimer);
 
+    // 2. ディスプレイ（液晶）は常に点灯状態にする
+    // 万が一 effect-off が付いていたら除去し、以後タイマーで付与もしない
+    const displayBox = document.querySelector('.display-main');
+    if (displayBox) {
+        displayBox.classList.remove('effect-off');
+    }
+
+    // 3. 前に光っていた鍵盤を一旦リセット
+    document.querySelectorAll('.white-key, .black-key').forEach(k => {
+        k.classList.remove('key-active', 'key-active-off');
+    });
+
+    // 4. 構成音の計算（エラー回避のため、発音処理より先に実行）
     const rootName = root.replace(/[0-9]/g, ''); 
     const baseOctave = (parseInt(root.replace(/[^0-9]/g, '')) || 4); 
     const rootIdx = NOTE_MAP.indexOf(rootName);
 
     if (rootIdx === -1) return;
 
-    // 構成音を先に定義（これでReferenceErrorを回避）
     const chordNotes = CHORD_INTERVALS[quality].map(interval => {
         const idx = (rootIdx + interval) % 12;
         const octShift = Math.floor((rootIdx + interval) / 12);
         return NOTE_MAP[idx] + (baseOctave + octShift);
     });
 
-    // 発音
-    currentInstrument.triggerAttackRelease(chordNotes, "2n");
+    // 5. 発音処理
+    currentInstrument.releaseAll();
+    if (currentInstrument === guitar) {
+        chordNotes.forEach((note, i) => {
+            currentInstrument.triggerAttackRelease(note, "2n", Tone.now() + (i * 0.05));
+        });
+    } else {
+        currentInstrument.triggerAttackRelease(chordNotes, "2n");
+    }
 
-    // ディスプレイ表示
+    // 6. ディスプレイ（コード名）の表示更新
     const display = document.getElementById('current-chord');
     if (display) {
         display.innerText = rootName + (quality === "Major" ? "" : quality);
     }
     
-    // 表示上の鍵盤を光らせる（2オクターブ下を狙う）
+    // 7. 鍵盤を光らせる
     chordNotes.forEach(n => {
         const name = n.replace(/[0-9]/g, ''); 
         const oct = parseInt(n.replace(/[^0-9]/g, ''));
@@ -188,16 +244,16 @@ function playChord(root, quality) {
         if (el) el.classList.add('key-active');
     });
 
-    if (currentInstrument === guitar) {
-        // ジャランとずらして弾く（ストローク）
-        chordNotes.forEach((note, i) => {
-            currentInstrument.triggerAttackRelease(note, "2n", Tone.now() + (i * 0.05));
+    // 8. 【鍵盤のみ】5秒後に消灯させるタイマーを設定
+    // ディスプレイ（displayBox）への操作は行いません
+    keyboardEffectTimer = setTimeout(() => {
+        document.querySelectorAll('.key-active').forEach(k => {
+            k.classList.add('key-active-off'); // CSSで強制的に色を戻す
         });
-    } else {
-        // ピアノは同時に弾く
-        currentInstrument.triggerAttackRelease(chordNotes, "2n");
-    }
+        console.log("5秒経過：鍵盤のみ消灯しました。");
+    }, 5000);
 
+    // 9. 弾いた鍵盤へ自動スクロール
     const activeKeys = document.querySelectorAll('.key-active');
     if (activeKeys.length > 0) {
         activeKeys[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });

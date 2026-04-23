@@ -34,23 +34,33 @@ body {
     margin-left: 10px;
 }
 
+#visual-piano {
+    position: relative;
+    height: 150px; /* 鍵盤の高さ */
+    margin: 0 auto;
+    background: #111;
+    overflow-x: auto; /* はみ出た場合にスクロール可能に */
+    overflow-y: hidden;
+}
+
+/* 鍵盤の基本スタイル */
 .white-key {
-    position: absolute; /* 位置を固定値で指定 */
-    width: 40px;
-    height: 140px;
-    background: #fff;
-    border: 1px solid #999;
-    border-radius: 0 0 5px 5px;
+    position: absolute;
+    width: 38px; /* whiteKeyWidth - 2px */
+    height: 100%;
+    background: white;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
     z-index: 1;
 }
 
 .black-key {
     position: absolute;
     width: 26px;
-    height: 85px;
-    background: #222;
+    height: 60%;
+    background: #333;
+    z-index: 2;
     border-radius: 0 0 3px 3px;
-    z-index: 2; /* 白鍵より手前に出す */
 }
 
 .key-active {
@@ -60,7 +70,8 @@ body {
 
 /* 2段目：表示パネル */
 #info-panel {
-    height: 60px;
+    height: 85px;
+    padding: 0 20px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -128,7 +139,6 @@ body {
     pointer-events: none;
 }
 /* --- 2段目：インフォパネルの強化 --- */
-/* --- 2段目：インフォパネルのデザイン変更 --- */
 #info-panel {
     height: 100px;
     display: flex;
@@ -146,6 +156,8 @@ body {
     border-radius: 4px;
     padding: 5px 15px;
     box-shadow: inset 0 0 10px #00adb5; /* 内側に光る */
+    min-width: 140px; /* サイズを一定にしてガタつきを防止 */
+    transition: all 0.5s ease; /* 5秒後の変化を滑らかにする */
 }
 
 .display-label {
@@ -173,4 +185,75 @@ body {
     font-family: 'Courier New', monospace;
     outline: none;
     cursor: pointer;
+}
+
+
+/* 5秒後に適用するスタイル（光を弱める） */
+.effect-off {
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+
+.effect-off #current-chord {
+    color: #555; /* 文字色を暗くして待機状態っぽく */
+    text-shadow: none;
+}
+
+/* 鍵盤のサイズ感：画面に対して大きすぎないように調整 */
+.keyboard-container {
+    height: 150px;
+    background: #111;
+}
+
+/* --- 通常状態（青いネオン） --- */
+.display-box {
+    background: #051a1a;
+    border: 2px solid #00adb5;
+    box-shadow: inset 0 0 10px #00adb5;
+    transition: all 0.5s ease; /* 変化を滑らかに */
+}
+
+#current-chord {
+    color: #fff;
+    text-shadow: 0 0 10px #00adb5;
+    transition: all 0.5s ease;
+}
+
+/* 5秒後に適用される消灯スタイル（最優先） */
+.display-box.effect-off {
+    background: #1a1a1a !important;
+    border-color: #333 !important;
+    box-shadow: none !important;
+}
+.display-box.effect-off #current-chord {
+    color: #444 !important;
+    text-shadow: none !important;
+}
+
+/* 鍵盤の消灯（白鍵・黒鍵それぞれ元の色へ強制的に戻す） */
+.white-key.key-active-off {
+    background-color: white !important;
+    box-shadow: none !important;
+}
+.black-key.key-active-off {
+    background-color: #333 !important;
+    box-shadow: none !important;
+}
+
+/* 元の状態（青い光） */
+.key-active {
+    background-color: var(--accent-color) !important;
+    box-shadow: 0 0 20px var(--accent-color);
+}
+
+/* 5秒後に消す状態（強制上書き） */
+/* JSで付与されるクラス。!important で最優先にする */
+.key-active-off {
+    background-color: white !important; /* 白鍵用 */
+    box-shadow: none !important;
+}
+
+/* 黒鍵用の上書き */
+.black-key.key-active-off {
+    background-color: #333 !important; /* 黒鍵の元の色 */
 }
