@@ -142,16 +142,15 @@ body {
 #info-panel {
     height: 100px;
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
-    background: #222; /* パネル本体は暗く */
-    padding: 0 10px;
-    border-top: 2px solid #444;
-    gap: 10px; /* ボックス間の隙間 */
+    gap: 8px; /* 隙間を少し狭くして3つ並べる */
+    padding: 0 5px;
 }
 
-/* 液晶ディスプレイ風のコンテナ */
 .display-main, .display-sub {
+    flex: 1;
+    min-width: 100px; /* 3つ並ぶので少し小さめに設定 */
     background: #051a1a;
     border: 2px solid #00adb5;
     border-radius: 4px;
@@ -194,6 +193,18 @@ body {
     -webkit-appearance: none;
 }
 
+/* セレクトボックスの装飾 */
+#octave-select {
+    background: transparent;
+    color: #fff;
+    border: none;
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    cursor: pointer;
+    appearance: none; /* デフォルトの矢印を消してスッキリさせる（任意） */
+    -webkit-appearance: none;
+}
 
 /* 5秒後に適用するスタイル（光を弱める） */
 .effect-off {
