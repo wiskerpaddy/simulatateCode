@@ -1,0 +1,15 @@
+{
+  "name": "Code Simulater",
+  "short_name": "CodeSimulater",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#00ffcc",
+  "icons": [
+      {
+        "src": "icon.png",
+        "sizes": "1024x1024",
+        "type": "image/png"
+      }
+    ]
+}

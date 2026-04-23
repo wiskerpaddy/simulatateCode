@@ -1,0 +1,121 @@
+:root {
+            --bg-color: #1a1a1a;
+            --key-bg: #333;
+            --accent-color: #00adb5;
+            --text-color: #eeeeee;
+            --piano-white: #ffffff;
+            --piano-black: #222222;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none; /* テキスト選択禁止 */
+        }
+
+        /* --- 1段目：ピアノディスプレイ --- */
+        #piano-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding: 10px;
+            background: #111;
+        }
+
+        .piano {
+            display: flex;
+            position: relative;
+            height: 80%;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .white-key {
+            flex: 1;
+            border: 1px solid #ccc;
+            background: var(--piano-white);
+            border-radius: 0 0 4px 4px;
+            position: relative;
+        }
+
+        .black-key {
+            width: 8%;
+            height: 60%;
+            background: var(--piano-black);
+            position: absolute;
+            z-index: 2;
+            margin-left: -4%;
+            border-radius: 0 0 2px 2px;
+        }
+
+        /* 鍵盤が光る時のエフェクト */
+        .key-active {
+            background-color: var(--accent-color) !important;
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        /* --- 2段目：コード表示パネル --- */
+        #info-panel {
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #252525;
+            border-bottom: 2px solid #000;
+        }
+
+        #current-chord {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        /* --- 3段目：IMEキーボード --- */
+        #ime-keyboard {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 4px;
+            padding: 4px;
+            background: #000;
+            touch-action: none; /* ブラウザのスクロール等を無効化 */
+        }
+
+        .ime-key {
+            background: var(--key-bg);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            position: relative;
+            transition: background 0.1s;
+        }
+
+        .ime-key:active {
+            background: #444;
+        }
+
+        /* フリックガイド（補助表示） */
+        .flick-guide {
+            position: absolute;
+            font-size: 0.7rem;
+            color: #888;
+        }
+        .guide-up    { top: 5px; }
+        .guide-right { right: 8px; }
+        .guide-down  { bottom: 5px; }
+        .guide-left  { left: 8px; }
+
