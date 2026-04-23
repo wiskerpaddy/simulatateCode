@@ -12,7 +12,7 @@ body {
     font-family: sans-serif;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh; 
     overflow: hidden;
     user-select: none;
     touch-action: none; /* ズーム・スクロール無効化 */
@@ -71,7 +71,7 @@ body {
 /* 2段目：表示パネル */
 #info-panel {
     height: 85px;
-    padding: 0 20px;
+    padding: 0 20px;    
     display: flex;
     justify-content: center;
     align-items: center;
@@ -147,6 +147,7 @@ body {
     background: #222; /* パネル本体は暗く */
     padding: 0 10px;
     border-top: 2px solid #444;
+    gap: 10px; /* ボックス間の隙間 */
 }
 
 /* 液晶ディスプレイ風のコンテナ */
@@ -156,14 +157,17 @@ body {
     border-radius: 4px;
     padding: 5px 15px;
     box-shadow: inset 0 0 10px #00adb5; /* 内側に光る */
-    min-width: 140px; /* サイズを一定にしてガタつきを防止 */
-    transition: all 0.5s ease; /* 5秒後の変化を滑らかにする */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box; /* パディングを含めたサイズ計算 */
 }
 
 .display-label {
     font-size: 0.6rem;
     color: #00adb5;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     margin-bottom: 2px;
 }
 
@@ -173,6 +177,7 @@ body {
     text-shadow: 0 0 10px #00adb5;
     font-family: 'Courier New', monospace;
     min-width: 100px;
+    width: 100%;
     text-align: center;
 }
 
@@ -185,6 +190,8 @@ body {
     font-family: 'Courier New', monospace;
     outline: none;
     cursor: pointer;
+    appearance: none; /* デフォルトの矢印を消してスッキリさせる（任意） */
+    -webkit-appearance: none;
 }
 
 
