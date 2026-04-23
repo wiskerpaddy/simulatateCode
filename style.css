@@ -106,7 +106,27 @@ body {
 .guide-up { top: 6px; }
 .guide-right { right: 8px; }
 .guide-down { bottom: 6px; }
+.guide-up-right { top: 6px; }
+/* 斜めガイドの配置 */
+.guide-up-left {
+    top: 5px;
+    left: 8px;
+    font-size: 0.6rem;
+}
 
+.guide-up-right {
+    top: 5px;
+    right: 8px;
+    font-size: 0.6rem;
+}
+
+/* 既存のガイドも少し調整すると見やすくなります */
+.flick-guide {
+    position: absolute;
+    font-size: 0.7rem;
+    color: rgba(136, 136, 136, 0.6); /* 少し透過させてメイン文字を邪魔しない */
+    pointer-events: none;
+}
 /* --- 2段目：インフォパネルの強化 --- */
 /* --- 2段目：インフォパネルのデザイン変更 --- */
 #info-panel {

@@ -1,23 +1,56 @@
-// --- 1. サンプラーの設定 ---
+// --- 1. 音源設定 ---
 const reverb = new Tone.Reverb(1.5).toDestination();
 
-// ピアノサンプラー（ファイル名を公式の最新版に合わせました）
+// 【本物のピアノ】
 const piano = new Tone.Sampler({
-    urls: {
-        "A1": "A1.mp3", "A2": "A2.mp3", "A3": "A3.mp3", "A4": "A4.mp3",
-        "C2": "C2.mp3", "C3": "C3.mp3", "C4": "C4.mp3", "C5": "C5.mp3"
-    },
+    urls: { "A1": "A1.mp3", "A2": "A2.mp3", "A3": "A3.mp3", "A4": "A4.mp3" },
     baseUrl: "https://tonejs.github.io/audio/salamander/",
-    onload: () => console.log("Piano loaded!")
+    onload: () => console.log("Piano Ready")
 }).connect(reverb);
 
-// 予備のシンセ
-const synth = new Tone.PolySynth(Tone.Synth).connect(reverb);
+// 【本物のギター】
+const guitar = new Tone.Sampler({
+    urls: {
+        "A2": "A2.mp3",
+        "E2": "E2.mp3",
+        "G3": "G3.mp3"
+    },
+    baseUrl: "https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/guitar-acoustic/",
+    onload: () => console.log("Guitar Ready")
+}).connect(reverb);
 
+// --- synth（第2音源）をサンプラーに変更 ---
+const synth = new Tone.Sampler({
+    urls: {
+        "A0": "A0.mp3",
+        "C1": "C1.mp3",
+        "D#1": "Ds1.mp3",
+        "F#1": "Fs1.mp3",
+        "A1": "A1.mp3"
+    },
+    // ファイル名が確実に一致する別のリポジトリ
+    baseUrl: "https://tonejs.github.io/audio/salamander/", 
+    onload: () => console.log("Second Sampler Ready")
+}).connect(reverb);
+
+// 最初はピアノをセット
 let currentInstrument = piano;
 
+// 楽器切り替え関数（ここが重要です！）
 function setInstrument(type) {
-    currentInstrument = (type === 'piano') ? piano : synth;
+    // 全ての音を一度止める
+    piano.releaseAll();
+    guitar.releaseAll();
+    synth.releaseAll();
+
+    if (type === 'piano') {
+        currentInstrument = piano;
+    } else if (type === 'guitar') {
+        currentInstrument = guitar;
+    } else {
+        currentInstrument = synth;
+    }
+    console.log("Switched to:", type);
 }
 
 // --- 1. 音源設定 (Tone.js) ---
@@ -57,12 +90,14 @@ for (let oct = 2; oct <= 4; oct++) { // 2から4までに変更
 }
 visualPiano.style.minWidth = (whiteKeyCount * whiteKeyWidth) + "px";
 
-// --- 2. データ定義 ---
+// --- 2. データ定義の拡張 ---
 const CHORD_INTERVALS = { 
     "Major": [0, 4, 7], 
     "m": [0, 3, 7], 
     "7": [0, 4, 7, 10], 
-    "m7": [0, 3, 7, 10] 
+    "m7": [0, 3, 7, 10],
+    "M7": [0, 4, 7, 11],  // メジャーセブンを追加
+    "sus4": [0, 5, 7]     // サスフォーを追加
 };
 const NOTE_MAP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -89,19 +124,23 @@ keys.forEach(key => {
         const diffY = touch.clientY - startY;
         
         let quality = "Major";
-        const threshold = 30; // フリック判定の距離
-        
-        // 方向判定
-        if (diffY < -threshold) quality = "m";      // 上
-        else if (diffX > threshold) quality = "7";  // 右
-        else if (diffY > threshold) quality = "m7"; // 下
+        const threshold = 30; 
 
-        let root = key.dataset.root;
-        // 数字が含まれていない場合（C, Dなど）はオクターブ4を付与
-        if (!/\d/.test(root)) {
-            root += "4";
+        // 斜め判定を含む8方向認識
+        if (diffY < -threshold && diffX < -threshold) {
+            quality = "M7";   // 左上：M7
+        } else if (diffY < -threshold && diffX > threshold) {
+            quality = "sus4"; // 右上：sus4
+        } else if (diffY < -threshold) {
+            quality = "m";    // 上：m
+        } else if (diffX > threshold) {
+            quality = "7";    // 右：7
+        } else if (diffY > threshold) {
+            quality = "m7";   // 下：m7
         }
 
+        let root = key.dataset.root;
+        if (!/\d/.test(root)) root += "4";
         playChord(root, quality);
     };
 
@@ -148,6 +187,16 @@ function playChord(root, quality) {
         const el = document.querySelector(`[data-note="${displayNote}"]`);
         if (el) el.classList.add('key-active');
     });
+
+    if (currentInstrument === guitar) {
+        // ジャランとずらして弾く（ストローク）
+        chordNotes.forEach((note, i) => {
+            currentInstrument.triggerAttackRelease(note, "2n", Tone.now() + (i * 0.05));
+        });
+    } else {
+        // ピアノは同時に弾く
+        currentInstrument.triggerAttackRelease(chordNotes, "2n");
+    }
 
     const activeKeys = document.querySelectorAll('.key-active');
     if (activeKeys.length > 0) {
