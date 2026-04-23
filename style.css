@@ -1,121 +1,156 @@
 :root {
-            --bg-color: #1a1a1a;
-            --key-bg: #333;
-            --accent-color: #00adb5;
-            --text-color: #eeeeee;
-            --piano-white: #ffffff;
-            --piano-black: #222222;
-        }
+    --bg-color: #1a1a1a;
+    --key-bg: #333;
+    --accent-color: #00adb5;
+    --text-color: #eeeeee;
+}
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-            user-select: none; /* テキスト選択禁止 */
-        }
+body {
+    margin: 0; padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+    touch-action: none; /* ズーム・スクロール無効化 */
+}
 
-        /* --- 1段目：ピアノディスプレイ --- */
-        #piano-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            padding: 10px;
-            background: #111;
-        }
+/* 1段目：ピアノディスプレイ */
+#piano-container {
+    flex: 1.5;
+    background: #111;
+    overflow-x: auto; /* 横スクロールを許可 */
+    padding: 20px 0;
+    -webkit-overflow-scrolling: touch;
+}
 
-        .piano {
-            display: flex;
-            position: relative;
-            height: 80%;
-            width: 100%;
-            max-width: 600px;
-        }
+.piano {
+    position: relative; /* 子要素の基準点 */
+    height: 100%;
+    min-width: 640px; /* 白鍵16枚分 × 40px */
+    margin-left: 10px;
+}
 
-        .white-key {
-            flex: 1;
-            border: 1px solid #ccc;
-            background: var(--piano-white);
-            border-radius: 0 0 4px 4px;
-            position: relative;
-        }
+.white-key {
+    position: absolute; /* 位置を固定値で指定 */
+    width: 40px;
+    height: 140px;
+    background: #fff;
+    border: 1px solid #999;
+    border-radius: 0 0 5px 5px;
+    z-index: 1;
+}
 
-        .black-key {
-            width: 8%;
-            height: 60%;
-            background: var(--piano-black);
-            position: absolute;
-            z-index: 2;
-            margin-left: -4%;
-            border-radius: 0 0 2px 2px;
-        }
+.black-key {
+    position: absolute;
+    width: 26px;
+    height: 85px;
+    background: #222;
+    border-radius: 0 0 3px 3px;
+    z-index: 2; /* 白鍵より手前に出す */
+}
 
-        /* 鍵盤が光る時のエフェクト */
-        .key-active {
-            background-color: var(--accent-color) !important;
-            box-shadow: 0 0 15px var(--accent-color);
-        }
+.key-active {
+    background-color: var(--accent-color) !important;
+    box-shadow: 0 0 20px var(--accent-color);
+}
 
-        /* --- 2段目：コード表示パネル --- */
-        #info-panel {
-            height: 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #252525;
-            border-bottom: 2px solid #000;
-        }
+/* 2段目：表示パネル */
+#info-panel {
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #222;
+    border-bottom: 2px solid #000;
+}
 
-        #current-chord {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--accent-color);
-        }
+#current-chord {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
 
-        /* --- 3段目：IMEキーボード --- */
-        #ime-keyboard {
-            flex: 2;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 4px;
-            padding: 4px;
-            background: #000;
-            touch-action: none; /* ブラウザのスクロール等を無効化 */
-        }
+/* 3段目：キーボード */
+#ime-keyboard {
+    flex: 3;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px;
+    background: #000;
+}
 
-        .ime-key {
-            background: var(--key-bg);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-            position: relative;
-            transition: background 0.1s;
-        }
+.ime-key {
+    background: var(--key-bg);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    position: relative;
+}
 
-        .ime-key:active {
-            background: #444;
-        }
+.ime-key:active { background: #555; }
 
-        /* フリックガイド（補助表示） */
-        .flick-guide {
-            position: absolute;
-            font-size: 0.7rem;
-            color: #888;
-        }
-        .guide-up    { top: 5px; }
-        .guide-right { right: 8px; }
-        .guide-down  { bottom: 5px; }
-        .guide-left  { left: 8px; }
+.flick-guide {
+    position: absolute;
+    font-size: 0.7rem;
+    color: #888;
+}
+.guide-up { top: 6px; }
+.guide-right { right: 8px; }
+.guide-down { bottom: 6px; }
 
+/* --- 2段目：インフォパネルの強化 --- */
+/* --- 2段目：インフォパネルのデザイン変更 --- */
+#info-panel {
+    height: 100px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #222; /* パネル本体は暗く */
+    padding: 0 10px;
+    border-top: 2px solid #444;
+}
+
+/* 液晶ディスプレイ風のコンテナ */
+.display-main, .display-sub {
+    background: #051a1a;
+    border: 2px solid #00adb5;
+    border-radius: 4px;
+    padding: 5px 15px;
+    box-shadow: inset 0 0 10px #00adb5; /* 内側に光る */
+}
+
+.display-label {
+    font-size: 0.6rem;
+    color: #00adb5;
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+}
+
+#current-chord {
+    font-size: 2rem;
+    color: #fff;
+    text-shadow: 0 0 10px #00adb5;
+    font-family: 'Courier New', monospace;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* セレクトボックスの装飾 */
+#inst-select {
+    background: transparent;
+    color: #fff;
+    border: none;
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    cursor: pointer;
+}

@@ -5,30 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta charset="UTF-8">
     <title>Chord Flick IME</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="piano-container">
-        <div class="piano" id="visual-piano">
-            <div class="white-key" data-note="C4"></div>
-            <div class="black-key" style="left: 14.28%" data-note="C#4"></div>
-            <div class="white-key" data-note="D4"></div>
-            <div class="black-key" style="left: 28.56%" data-note="D#4"></div>
-            <div class="white-key" data-note="E4"></div>
-            <div class="white-key" data-note="F4"></div>
-            <div class="black-key" style="left: 57.12%" data-note="F#4"></div>
-            <div class="white-key" data-note="G4"></div>
-            <div class="black-key" style="left: 71.4%" data-note="G#4"></div>
-            <div class="white-key" data-note="A4"></div>
-            <div class="black-key" style="left: 85.68%" data-note="A#4"></div>
-            <div class="white-key" data-note="B4"></div>
-            <div class="white-key" data-note="C5"></div>
-        </div>
-    </div>
-
+        <div class="piano" id="visual-piano"></div>
+    </div> 
     <div id="info-panel">
-        <div id="current-chord">READY</div>
+        <div class="display-main">
+            <div class="display-label">CHORD</div>
+            <div id="current-chord">READY</div>
+        </div>
+        
+        <div class="display-sub">
+            <div class="display-label">INSTRUMENT</div>
+            <select id="inst-select" onchange="setInstrument(this.value)">
+                <option value="piano">Acoustic Piano</option>
+                <option value="synth">Poly Synth</option>
+            </select>
+        </div>
     </div>
 
     <div id="ime-keyboard">
@@ -44,8 +41,5 @@
     </div>
     
     <script src="./script.js"></script>
-    <style>
-
-    </style>
 </body>
 </html>
