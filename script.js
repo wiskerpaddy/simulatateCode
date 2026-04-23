@@ -193,11 +193,9 @@ keys.forEach(key => {
 function playChord(root, quality) {
     if (keyboardEffectTimer) clearTimeout(keyboardEffectTimer);
 
-    // 1. セレクトボックスから基準となるオクターブを取得
     const octaveSelect = document.getElementById('octave-select');
     const selectedOctave = octaveSelect ? parseInt(octaveSelect.value) : 4;
 
-    // 2. ディスプレイの点灯状態をリセット
     const displayBox = document.querySelector('.display-main');
     if (displayBox) displayBox.classList.remove('effect-off');
 
@@ -205,60 +203,65 @@ function playChord(root, quality) {
         k.classList.remove('key-active', 'key-active-off');
     });
 
-    // 3. ルート音とボタン固有のオクターブ値を取得
     const rootName = root.replace(/[0-9]/g, ''); 
-    // ボタンのdata-rootが"C5"なら5、指定がなければselectedOctaveを使う
     const hasOctaveInRoot = /[0-9]/.test(root);
     const baseOct = hasOctaveInRoot ? parseInt(root.replace(/[^0-9]/g, '')) : selectedOctave;
-    
-    // C↑ (C5) などの場合は、セレクトボックスとの相対的な差分を考慮
-    // 基準が4の時にC5なら、基準が3の時はC4にする
     const finalBaseOct = hasOctaveInRoot ? (baseOct - 4 + selectedOctave) : selectedOctave;
 
     const rootIdx = NOTE_MAP.indexOf(rootName);
     if (rootIdx === -1) return;
 
-    // 4. コード構成音の計算（重複を削除し一本化）
+    // 1. 通常の和音（構成音）を計算
     const chordNotes = CHORD_INTERVALS[quality].map(interval => {
         const idx = (rootIdx + interval) % 12;
         const octShift = Math.floor((rootIdx + interval) / 12);
         return NOTE_MAP[idx] + (finalBaseOct + octShift);
     });
 
-    // 5. 発音処理
+    // 2. 【追加】「両手弾き感」を出すためのベース音（1オクターブ下のルート単音）
+    // finalBaseOct からさらに 1 引いたオクターブでルート音を作成
+    const bassNote = rootName + (finalBaseOct - 1);
+    
+    // 全体の音（ベース音 + 和音）をまとめた配列を作る
+    const allNotes = [bassNote, ...chordNotes];
+
+    // 3. 発音処理（allNotes を鳴らすように変更）
     currentInstrument.releaseAll();
     if (currentInstrument === guitar) {
+        // ギターの場合はベース音を先に、そのあと和音をジャランと鳴らす
+        currentInstrument.triggerAttackRelease(bassNote, "2n", Tone.now());
         chordNotes.forEach((note, i) => {
-            currentInstrument.triggerAttackRelease(note, "2n", Tone.now() + (i * 0.05));
+            currentInstrument.triggerAttackRelease(note, "2n", Tone.now() + 0.05 + (i * 0.05));
         });
     } else {
-        currentInstrument.triggerAttackRelease(chordNotes, "2n");
+        // ピアノやシンセは一斉に鳴らす
+        currentInstrument.triggerAttackRelease(allNotes, "2n");
     }
 
-    // 6. ディスプレイ更新
+    // 4. ディスプレイ表示（ここは変更なし）
     const display = document.getElementById('current-chord');
     if (display) {
         display.innerText = rootName + (quality === "Major" ? "" : quality);
     }
     
-    // 7. 鍵盤を光らせる（画面上の鍵盤 C2〜D4 とのズレを補正）
+    // 5. 鍵盤を光らせる（和音部分のみを光らせるか、ベースも光らせるかはお好みですが、
+    // ここでは和音部分 chordNotes だけを光らせておきます）
     chordNotes.forEach(n => {
         const name = n.replace(/[0-9]/g, ''); 
         const oct = parseInt(n.replace(/[^0-9]/g, ''));
-        // 実際の音(oct)と選択されたオクターブの差分を利用して、表示位置を決定
         const displayNote = name + (oct - (selectedOctave - 2)); 
         const el = document.querySelector(`[data-note="${displayNote}"]`);
         if (el) el.classList.add('key-active');
     });
 
-    // 8. 5秒後に消灯
+    // 6. 5秒後に消灯
     keyboardEffectTimer = setTimeout(() => {
         document.querySelectorAll('.key-active').forEach(k => {
             k.classList.add('key-active-off');
         });
     }, 5000);
 
-    // 9. 自動スクロール
+    // 7. スクロール
     const activeKeys = document.querySelectorAll('.key-active');
     if (activeKeys.length > 0) {
         activeKeys[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
