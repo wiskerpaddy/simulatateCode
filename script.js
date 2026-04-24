@@ -260,6 +260,20 @@ function playChord(root, quality) {
     keyboardEffectTimer = setTimeout(() => {
         document.querySelectorAll('.key-active').forEach(k => k.classList.add('key-active-off'));
     }, 5000);
+
+    // 7. スクロール（新しく光った鍵盤へ自動フォーカス）
+    // 少し遅らせて実行することで、描画タイミングとのズレを防ぎます
+    setTimeout(() => {
+        const activeKeys = document.querySelectorAll('.key-active');
+        if (activeKeys.length > 0) {
+            // 最初（一番左側）の活動鍵盤を中央付近に表示
+            activeKeys[0].scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'nearest', 
+                inline: 'center' 
+            });
+        }
+    }, 50);
 }
 
 /**
