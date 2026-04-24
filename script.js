@@ -1,19 +1,23 @@
 let keyboardEffectTimer = null;
+// 直前の和音の平均ピッチを保持する変数（初期値は真ん中のC付近）
+let lastAveragePitch = 60;
 
-// --- 鍵盤生成を関数化 ---
+// --- 鍵盤生成関数（initKeyboard）の修正 ---
 function initKeyboard() {
     const visualPiano = document.getElementById('visual-piano');
     if (!visualPiano) return;
 
     const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
     let whiteKeyCount = 0;
-    const whiteKeyWidth = 40; // ここを調整すると鍵盤の幅が変わります
+    const whiteKeyWidth = 40;
 
-    visualPiano.innerHTML = ''; // クリア
+    visualPiano.innerHTML = ''; 
 
-    for (let oct = 2; oct <= 4; oct++) {
+    // オクターブ2から5まで生成
+    for (let oct = 2; oct <= 5; oct++) {
         notes.forEach((note) => {
-            if (oct === 4 && !["C", "C#", "D"].includes(note)) return;
+            // C6より上の音はいらないのでストップ
+            if (oct === 5 && note !== "C") return;
 
             const isBlack = note.includes('#');
             const el = document.createElement('div');
@@ -29,7 +33,6 @@ function initKeyboard() {
             visualPiano.appendChild(el);
         });
     }
-    // コンテナの幅を whiteKeyCount に合わせて固定
     visualPiano.style.width = (whiteKeyCount * whiteKeyWidth) + "px";
 }
 
@@ -190,80 +193,112 @@ keys.forEach(key => {
     key.addEventListener('mouseup', endAction);
 });
 
+// --- 3. 発音ロジックの改良（ボイスリーディング対応版） ---
 function playChord(root, quality) {
     if (keyboardEffectTimer) clearTimeout(keyboardEffectTimer);
 
     const octaveSelect = document.getElementById('octave-select');
+    // UIで選んだオクターブ (3, 4, 5)
     const selectedOctave = octaveSelect ? parseInt(octaveSelect.value) : 4;
 
+    // 表示系エフェクトのリセット
     const displayBox = document.querySelector('.display-main');
     if (displayBox) displayBox.classList.remove('effect-off');
-
     document.querySelectorAll('.white-key, .black-key').forEach(k => {
         k.classList.remove('key-active', 'key-active-off');
     });
 
     const rootName = root.replace(/[0-9]/g, ''); 
-    const hasOctaveInRoot = /[0-9]/.test(root);
-    const baseOct = hasOctaveInRoot ? parseInt(root.replace(/[^0-9]/g, '')) : selectedOctave;
-    const finalBaseOct = hasOctaveInRoot ? (baseOct - 4 + selectedOctave) : selectedOctave;
-
     const rootIdx = NOTE_MAP.indexOf(rootName);
     if (rootIdx === -1) return;
 
-    // 1. 通常の和音（構成音）を計算
-    const chordNotes = CHORD_INTERVALS[quality].map(interval => {
-        const idx = (rootIdx + interval) % 12;
-        const octShift = Math.floor((rootIdx + interval) / 12);
-        return NOTE_MAP[idx] + (finalBaseOct + octShift);
+    // 1. 和音の構成音（音名）を計算
+    const chordNotesNames = CHORD_INTERVALS[quality].map(interval => {
+        return NOTE_MAP[(rootIdx + interval) % 12];
     });
 
-    // 2. 【追加】「両手弾き感」を出すためのベース音（1オクターブ下のルート単音）
-    // finalBaseOct からさらに 1 引いたオクターブでルート音を作成
-    const bassNote = rootName + (finalBaseOct - 1);
+    // 2. 最適なボイシング（MIDI番号）を計算
+    // selectedOctaveが3なら、MIDI番号48(C3)付近を基準に和音を作る
+    const bestMidiNotes = getBestInversion(chordNotesNames, selectedOctave);
     
-    // 全体の音（ベース音 + 和音）をまとめた配列を作る
-    const allNotes = [bassNote, ...chordNotes];
+    // 3. ベース音の準備（音は鳴らすが、光らせないリスト）
+    // 選択オクターブの1オクターブ下をベースとする
+    const bassMidi = (NOTE_MAP.indexOf(rootName) + (selectedOctave + 1) * 12);
+    const playNotes = [bassMidi, ...bestMidiNotes].map(n => Tone.Frequency(n, "midi").toNote());
 
-    // 3. 発音処理（allNotes を鳴らすように変更）
+    // 4. 発音処理
     currentInstrument.releaseAll();
     if (currentInstrument === guitar) {
-        // ギターの場合はベース音を先に、そのあと和音をジャランと鳴らす
-        currentInstrument.triggerAttackRelease(bassNote, "2n", Tone.now());
-        chordNotes.forEach((note, i) => {
+        currentInstrument.triggerAttackRelease(playNotes[0], "2n", Tone.now());
+        bestMidiNotes.forEach((midi, i) => {
+            const note = Tone.Frequency(midi, "midi").toNote();
             currentInstrument.triggerAttackRelease(note, "2n", Tone.now() + 0.05 + (i * 0.05));
         });
     } else {
-        // ピアノやシンセは一斉に鳴らす
-        currentInstrument.triggerAttackRelease(allNotes, "2n");
+        currentInstrument.triggerAttackRelease(playNotes, "2n");
     }
 
-    // 4. ディスプレイ表示（ここは変更なし）
+    // --- 表示処理 ---
     const display = document.getElementById('current-chord');
-    if (display) {
-        display.innerText = rootName + (quality === "Major" ? "" : quality);
-    }
-    
-    // 5. 鍵盤を光らせる（和音部分のみを光らせるか、ベースも光らせるかはお好みですが、
-    // ここでは和音部分 chordNotes だけを光らせておきます）
-    chordNotes.forEach(n => {
-        const name = n.replace(/[0-9]/g, ''); 
-        const oct = parseInt(n.replace(/[^0-9]/g, ''));
-        const displayNote = name + (oct - (selectedOctave - 2)); 
+    if (display) display.innerText = rootName + (quality === "Major" ? "" : quality);
+
+    // 【重要】和音の構成音（bestMidiNotes）だけを光らせる
+    bestMidiNotes.forEach(midi => {
+        // MIDI番号から音名+オクターブを取得 (例: 48 -> "C3")
+        const noteWithOct = Tone.Frequency(midi, "midi").toNote();
+        
+        // 画面上の鍵盤（C2〜D4）にマッピングするための調整
+        // MIDI番号48はC3ですが、画面の構成に合わせてオクターブ値を-1して検索します
+        const name = noteWithOct.replace(/[0-9]/g, '');
+        const oct = parseInt(noteWithOct.replace(/[^0-9]/g, ''));
+        const displayNote = name + (oct - 1); // 画面のデータ属性(data-note)に合わせる
+
         const el = document.querySelector(`[data-note="${displayNote}"]`);
         if (el) el.classList.add('key-active');
     });
 
-    // 6. 5秒後に消灯
     keyboardEffectTimer = setTimeout(() => {
-        document.querySelectorAll('.key-active').forEach(k => {
-            k.classList.add('key-active-off');
-        });
+        document.querySelectorAll('.key-active').forEach(k => k.classList.add('key-active-off'));
     }, 5000);
-
-    // 7. スクロール
-    const activeKeys = document.querySelectorAll('.key-active');
-    if (activeKeys.length > 0) {
-        activeKeys[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
 }
+
+/**
+ * ターゲットオクターブを考慮した最短距離計算
+ */
+function getBestInversion(chordNotes, targetOctave) {
+    // MIDI番号のオフセットを調整（画面上のLow=3のとき、MIDIの48付近から始まるように）
+    const octaveOffset = (targetOctave + 1) * 12; 
+    const targetCenter = octaveOffset + 6; 
+    
+    let patterns = [];
+    for (let i = 0; i < chordNotes.length; i++) {
+        let pattern = [];
+        for (let j = 0; j < chordNotes.length; j++) {
+            let noteIdx = (i + j) % chordNotes.length;
+            let midi = NOTE_MAP.indexOf(chordNotes[noteIdx]) + octaveOffset;
+            if (j > 0 && midi <= pattern[j-1]) midi += 12;
+            pattern.push(midi);
+        }
+        patterns.push(pattern);
+    }
+
+    let bestPattern = patterns[0];
+    let minScore = Infinity;
+
+    patterns.forEach(pattern => {
+        const avg = pattern.reduce((a, b) => a + b) / pattern.length;
+        const distFromLast = Math.abs(avg - lastAveragePitch);
+        const distFromTarget = Math.abs(avg - targetCenter);
+        
+        // 直前の音を優先しつつ、ユーザーが選んだオクターブの範囲内に収まるようにスコアリング
+        const score = (distFromLast * 0.7) + (distFromTarget * 0.3);
+
+        if (score < minScore) {
+            minScore = score;
+            bestPattern = pattern;
+        }
+    });
+
+    lastAveragePitch = bestPattern.reduce((a, b) => a + b) / bestPattern.length;
+    return bestPattern;
+}   

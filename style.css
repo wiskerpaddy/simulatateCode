@@ -28,9 +28,9 @@ body {
 }
 
 .piano {
-    position: relative; /* 子要素の基準点 */
+    position: relative;
     height: 100%;
-    min-width: 640px; /* 白鍵16枚分 × 40px */
+    min-width: 1160px; /* 白鍵29枚分（C2〜C6）× 40px に合わせて拡張 */
     margin-left: 10px;
 }
 
