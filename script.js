@@ -338,9 +338,9 @@ let currentBpm = 96;     // 初期テンポ（BPM=96）
 // 曲のタイトル定義（ボタンの文字切り替え用）
 const DEMO_TITLES = {
     autumnLeaves: "枯葉",
-    flyMe: "Fly Me",
-    justTwo: "Just Two",
-    youDBeSoNice: "You'd Be"
+    odoLoop: "王道進行ループ",
+    canon: "カノン進行",
+    jazz1625: "Jazz 1-6-2-5"
 };
 
 // 名曲のコード進行データ（サックス表記音ベース / すべて白鍵ルートで演奏可能）
@@ -351,25 +351,32 @@ const DEMO_SONGS = {
         { root: 'B', quality: 'm7(b5)' }, { root: 'E', quality: '7(b9)' },
         { root: 'A', quality: 'm7' }
     ],
-    flyMe: [
-        { root: 'A', quality: 'm7' }, { root: 'D', quality: 'm7' },
-        { root: 'G', quality: '7' }, { root: 'C', quality: 'M7' },
-        { root: 'F', quality: 'M7' }, { root: 'B', quality: 'm7(b5)' },
-        { root: 'E', quality: '7(b9)' }
+    // 2. 王道J-POP進行（4コードループ）
+    odoLoop: [
+        { root: 'F', quality: 'M7' },
+        { root: 'E', quality: '7' },
+        { root: 'A', quality: 'm7' },
+        { root: 'C', quality: '7' }
     ],
-    justTwo: [
-        { root: 'F', quality: 'M7' },       // 1. F (よりジャジーにするためM7にしています)
-        { root: 'F', quality: 'M7' },       // 1. F (よりジャジーにするためM7にしています)
-        { root: 'E', quality: '7' },        // 2. E7 (ここをお洒落な '7(b9)' にしてもカッコいいです)
-        { root: 'E', quality: '7' },        // 2. E7 (ここをお洒落な '7(b9)' にしてもカッコいいです)
-        { root: 'A', quality: 'm7' },       // 3. Am7
-        { root: 'G', quality: 'm7' },       // 4. Gm7 （次への架け橋となるマイナーセブン）
-        { root: 'C', quality: '7' },        // 5. C7  （ドミナント・モーション）
+
+    // 3. カノン進行ループ（8コード）
+    canon: [
+        { root: 'C', quality: 'Major' },
+        { root: 'G', quality: 'Major' },
+        { root: 'A', quality: 'm' },
+        { root: 'E', quality: 'm' },
+        { root: 'F', quality: 'Major' },
+        { root: 'C', quality: 'Major' },
+        { root: 'F', quality: 'Major' },
+        { root: 'G', quality: '7' }
     ],
-    // ★ You'd Be So Nice to Come Home To（哀愁漂う4度進行とツーファイブ）
-    youDBeSoNice: [
-        { root: 'A', quality: 'm7' }, { root: 'B', quality: '7(b9)' }, { root: 'E', quality: 'm7' }, { root: 'E', quality: 'm7' },
-        { root: 'A', quality: 'm7' }, { root: 'D', quality: '7' },    { root: 'G', quality: 'M7' }, { root: 'G', quality: 'M7' }
+
+    // 4. ジャズ・ターンアラウンド（1625）
+    jazz1625: [
+        { root: 'C', quality: '6' },
+        { root: 'A', quality: 'm7' },
+        { root: 'D', quality: 'm7' },
+        { root: 'G', quality: '7' }
     ]
 };
 
@@ -408,7 +415,7 @@ function toggleDemo(songKey) {
     currentDemoSong = songKey;
     demoIndex = 0;
 
-    // 再生中ボタンの見た目をアクティブ化
+    // DEMO_TITLES を使って対象ボタンの表記を Stop に変更
     const btn = document.getElementById(`btn-${songKey}`);
     if (btn) {
         btn.classList.add('playing');
@@ -418,7 +425,24 @@ function toggleDemo(songKey) {
     // テンポ変更が次のコードへ即座に反映されるよう、1拍ごとに秒数を計算してループさせる
     const playNext = () => {
         const chord = song[demoIndex];
-        playChord(chord.root, chord.quality);
+        
+        // ▼▼▼ 【追加】休符（REST）の判定ロジック ▼▼▼
+        if (chord.root === 'REST' || chord.root === 'R') {
+            // 画面のコード表示を休符表示にする
+            const chordDisplay = document.getElementById('current-chord');
+            if (chordDisplay) {
+                chordDisplay.innerText = "𝄾 (REST)";
+            }
+            // 鳴っている鍵盤のネオンを消灯させる
+            document.querySelectorAll('.key-active').forEach(k => k.classList.add('key-active-off'));
+            
+            // ※もし音が伸び続けてしまう場合は、ここにシンセを止める処理（例: releaseAll() など）を入れるとより確実です
+        } else {
+            // 通常通りのコード再生
+            playChord(chord.root, chord.quality);
+        }
+        // ▲▲▲ ここまで ▲▲▲
+
         demoIndex = (demoIndex + 1) % song.length;
         
         // その時点でのBPMから割り出した間隔で、次のコードの再生を予約
@@ -435,7 +459,7 @@ function stopDemo() {
     demoTimeoutId = null;
     currentDemoSong = null;
 
-    // 全ボタンのスタイルとテキストを一括リセット
+// 全てのボタンを DEMO_TITLES を使って元の表記にリセット
     Object.keys(DEMO_TITLES).forEach(key => {
         const btn = document.getElementById(`btn-${key}`);
         if (btn) {
