@@ -299,3 +299,18 @@ body {
     appearance: none;
     -webkit-appearance: none;
 }
+
+/* 新設したジャズコード用のガイド位置調整 */
+.guide-left {
+    left: 8px;
+}
+.guide-down-left {
+    bottom: 5px;
+    left: 8px;
+    font-size: 0.6rem;
+}
+.guide-down-right {
+    bottom: 5px;
+    right: 8px;
+    font-size: 0.6rem;
+}

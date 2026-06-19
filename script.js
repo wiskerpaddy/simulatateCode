@@ -123,7 +123,12 @@ const CHORD_INTERVALS = {
     "7": [0, 4, 7, 10], 
     "m7": [0, 3, 7, 10],
     "M7": [0, 4, 7, 11],  // メジャーセブンを追加
-    "sus4": [0, 5, 7]     // サスフォーを追加
+// --- ▼▼ ジャズ用コードを追加・変更 ▼▼ ---
+    "7(b9)": [0, 4, 10, 13],  // sus4を削除し、こちらに差し替え（5度省きボイシング）
+    "m7(b5)": [0, 3, 6, 10], // ルート, ♭3, ♭5, ♭7
+    "dim7": [0, 3, 6, 9],     // ルート, ♭3, ♭5, 6(減7)
+    "6": [0, 4, 7, 9]         // ルート, 3, 5, 6
+    // --- ▲▲ ここまで ▲▲ ---
 };
 const NOTE_MAP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -152,18 +157,23 @@ keys.forEach(key => {
         let quality = "Major";
         const threshold = 30; 
 
-        // 斜め判定を含む8方向認識
-        if (diffY < -threshold && diffX < -threshold) {
-            quality = "M7";   // 左上：M7
-        } else if (diffY < -threshold && diffX > threshold) {
-            quality = "sus4"; // 右上：sus4
-        } else if (diffY < -threshold) {
-            quality = "m";    // 上：m
-        } else if (diffX > threshold) {
-            quality = "7";    // 右：7
+        // ▼▼ 誤判定のない、綺麗な8方向フリック判定ロジック ▼▼
+        if (diffY < -threshold) {
+            // 【上方向グループ】
+            if (diffX < -threshold) quality = "M7";         // 左上
+            else if (diffX > threshold) quality = "7(b9)";  // 右上
+            else quality = "m";                             // 上
         } else if (diffY > threshold) {
-            quality = "m7";   // 下：m7
+            // 【下方向グループ】
+            if (diffX < -threshold) quality = "dim7";       // 左下
+            else if (diffX > threshold) quality = "6";      // 右下
+            else quality = "m7";                            // 下
+        } else {
+            // 【水平方向グループ】
+            if (diffX > threshold) quality = "7";           // 右
+            else if (diffX < -threshold) quality = "m7(b5)";// 左
         }
+        // ▲▲ ここまで ▲▲
 
         let root = key.dataset.root;
         if (!/\d/.test(root)) root += "4";
