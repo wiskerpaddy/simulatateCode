@@ -314,4 +314,113 @@ function getBestInversion(chordNotes, targetOctave) {
 
     lastAveragePitch = bestPattern.reduce((a, b) => a + b) / bestPattern.length;
     return bestPattern;
-}   
+}  
+
+const startAction = (e) => {
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    
+    // ▼▼ ここに1行追加（手動演奏が始まったらデモを止める） ▼▼
+    stopDemo();
+    
+    if (Tone.context.state !== 'running') {
+        Tone.context.resume();
+    }
+};
+
+// --- ▼▼ デモ演奏（4曲対応版）のロジック ▼▼ ---
+let demoIntervalId = null;
+let currentDemoSong = null;
+let demoIndex = 0;
+
+// 曲のタイトル定義（ボタンの文字切り替え用）
+const DEMO_TITLES = {
+    autumnLeaves: "枯葉",
+    flyMe: "Fly Me",
+    justTwo: "Just Two",
+    youDBeSoNice: "You'd Be"
+};
+
+// 名曲のコード進行データ（サックス表記音ベース / すべて白鍵ルートで演奏可能）
+const DEMO_SONGS = {
+    autumnLeaves: [
+        { root: 'D', quality: 'm7' }, { root: 'G', quality: '7' },
+        { root: 'C', quality: 'M7' }, { root: 'F', quality: 'M7' },
+        { root: 'B', quality: 'm7(b5)' }, { root: 'E', quality: '7(b9)' },
+        { root: 'A', quality: 'm7' }
+    ],
+    flyMe: [
+        { root: 'A', quality: 'm7' }, { root: 'D', quality: 'm7' },
+        { root: 'G', quality: '7' }, { root: 'C', quality: 'M7' },
+        { root: 'F', quality: 'M7' }, { root: 'B', quality: 'm7(b5)' },
+        { root: 'E', quality: '7(b9)' }
+    ],
+    // ★ Just the Two of Us（都会的でエモい王道ループ進行）
+    justTwo: [
+        { root: 'F', quality: 'M7' },       // FM7
+        { root: 'E', quality: '7(b9)' },    // E7(b9)（超重要！これであのお洒落さが出ます）
+        { root: 'A', quality: 'm7' },       // Am7
+        { root: 'C', quality: '7' }         // C7
+    ],
+    // ★ You'd Be So Nice to Come Home To（哀愁漂う4度進行とツーファイブ）
+    youDBeSoNice: [
+        { root: 'A', quality: 'm7' }, { root: 'B', quality: '7(b9)' }, { root: 'E', quality: 'm7' }, { root: 'E', quality: 'm7' },
+        { root: 'A', quality: 'm7' }, { root: 'D', quality: '7' },    { root: 'G', quality: 'M7' }, { root: 'G', quality: 'M7' }
+    ]
+};
+
+// デモの再生・停止を切り替えるメイン関数
+function toggleDemo(songKey) {
+    if (demoIntervalId && currentDemoSong === songKey) {
+        stopDemo();
+        return;
+    }
+    if (demoIntervalId) {
+        stopDemo();
+    }
+
+    if (Tone.context.state !== 'running') {
+        Tone.context.resume();
+    }
+
+    const song = DEMO_SONGS[songKey];
+    if (!song) return;
+
+    currentDemoSong = songKey;
+    demoIndex = 0;
+
+    // 再生中ボタンの見た目をアクティブ化
+    const btn = document.getElementById(`btn-${songKey}`);
+    if (btn) {
+        btn.classList.add('playing');
+        btn.innerText = `■ ${DEMO_TITLES[songKey]} (Stop)`;
+    }
+
+    const playNext = () => {
+        const chord = song[demoIndex];
+        playChord(chord.root, chord.quality);
+        demoIndex = (demoIndex + 1) % song.length;
+    };
+
+    playNext();
+    demoIntervalId = setInterval(playNext, 2500); // 2.5秒ごとに次のコードへ
+}
+
+// すべてのデモを停止してUIを元に戻す関数
+function stopDemo() {
+    if (!demoIntervalId) return;
+
+    clearInterval(demoIntervalId);
+    demoIntervalId = null;
+    currentDemoSong = null;
+
+    // 全ボタンのスタイルとテキストを一括リセット
+    Object.keys(DEMO_TITLES).forEach(key => {
+        const btn = document.getElementById(`btn-${key}`);
+        if (btn) {
+            btn.classList.remove('playing');
+            btn.innerText = `▶ ${DEMO_TITLES[key]} (Demo)`;
+        }
+    });
+}

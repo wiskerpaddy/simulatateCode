@@ -314,3 +314,40 @@ body {
     right: 8px;
     font-size: 0.6rem;
 }
+
+#demo-controls {
+    height: auto; /* 高さを自動可変に */
+    min-height: 40px;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px; /* 隙間を少しタイトに */
+    border-bottom: 1px solid #222;
+    padding: 8px 10px; /* 上下に少し余白を持たせる */
+    flex-wrap: wrap; /* ★ 画面が狭いときは2列に折り返す */
+}
+
+#demo-controls button {
+    flex: 1;
+    min-width: 120px; /* 最低幅を決めておく */
+    max-width: 160px;
+    background: #111;
+    color: #00adb5;
+    border: 1px solid #00adb5;
+    border-radius: 6px;
+    padding: 6px 0;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 5px rgba(0, 173, 181, 0.2);
+}
+
+/* 再生中のアクティブ状態 */
+#demo-controls button.playing {
+    background: #00adb5;
+    color: #fff;
+    box-shadow: 0 0 15px #00adb5;
+}
