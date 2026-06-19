@@ -404,7 +404,7 @@ function toggleDemo(songKey) {
     };
 
     playNext();
-    demoIntervalId = setInterval(playNext, 2500); // 2.5秒ごとに次のコードへ
+    demoIntervalId = setInterval(playNext, 1800); // 1.8秒ごとに次のコードへ
 }
 
 // すべてのデモを停止してUIを元に戻す関数
