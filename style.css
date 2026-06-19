@@ -351,3 +351,26 @@ body {
     color: #fff;
     box-shadow: 0 0 15px #00adb5;
 }
+
+/* --- テンポ調整スライダーのスタイル --- */
+.tempo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    background: #111;
+    border-radius: 5px;
+    border: 1px solid #333;
+    margin: 5px auto;
+}
+
+#tempo-slider {
+    accent-color: var(--accent-color);
+    cursor: pointer;
+    width: 140px;
+    vertical-align: middle;
+}

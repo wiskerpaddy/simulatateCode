@@ -330,9 +330,10 @@ const startAction = (e) => {
 };
 
 // --- ▼▼ デモ演奏（4曲対応版）のロジック ▼▼ ---
-let demoIntervalId = null;
+let demoTimeoutId = null; // setIntervalからsetTimeout制御に切り替えるため変更
 let currentDemoSong = null;
 let demoIndex = 0;
+let currentBpm = 96;     // 初期テンポ（BPM=96）
 
 // 曲のタイトル定義（ボタンの文字切り替え用）
 const DEMO_TITLES = {
@@ -358,11 +359,12 @@ const DEMO_SONGS = {
     ],
     justTwo: [
         { root: 'F', quality: 'M7' },       // 1. F (よりジャジーにするためM7にしています)
+        { root: 'F', quality: 'M7' },       // 1. F (よりジャジーにするためM7にしています)
+        { root: 'E', quality: '7' },        // 2. E7 (ここをお洒落な '7(b9)' にしてもカッコいいです)
         { root: 'E', quality: '7' },        // 2. E7 (ここをお洒落な '7(b9)' にしてもカッコいいです)
         { root: 'A', quality: 'm7' },       // 3. Am7
         { root: 'G', quality: 'm7' },       // 4. Gm7 （次への架け橋となるマイナーセブン）
         { root: 'C', quality: '7' },        // 5. C7  （ドミナント・モーション）
-        { root: 'F', quality: 'M7' }        // 6. F   （頭に戻る）
     ],
     // ★ You'd Be So Nice to Come Home To（哀愁漂う4度進行とツーファイブ）
     youDBeSoNice: [
@@ -371,13 +373,28 @@ const DEMO_SONGS = {
     ]
 };
 
-// デモの再生・停止を切り替えるメイン関数
+// ==========================================
+// 6. デモ演奏（オートプレイ）ロジック（テンポ可変版）
+// ==========================================
+
+// BPMから1コード（4拍分）のミリ秒を計算する関数
+function getChordInterval() {
+    return (240000 / currentBpm); 
+}
+
+// スライダーを動かしたときにリアルタイムで数値を書き換える関数
+function updateTempo(val) {
+    currentBpm = parseInt(val);
+    const tempoVal = document.getElementById('tempo-val');
+    if (tempoVal) tempoVal.innerText = val;
+}
+
 function toggleDemo(songKey) {
-    if (demoIntervalId && currentDemoSong === songKey) {
+    if (demoTimeoutId && currentDemoSong === songKey) {
         stopDemo();
         return;
     }
-    if (demoIntervalId) {
+    if (demoTimeoutId) {
         stopDemo();
     }
 
@@ -398,22 +415,24 @@ function toggleDemo(songKey) {
         btn.innerText = `■ ${DEMO_TITLES[songKey]} (Stop)`;
     }
 
+    // テンポ変更が次のコードへ即座に反映されるよう、1拍ごとに秒数を計算してループさせる
     const playNext = () => {
         const chord = song[demoIndex];
         playChord(chord.root, chord.quality);
         demoIndex = (demoIndex + 1) % song.length;
+        
+        // その時点でのBPMから割り出した間隔で、次のコードの再生を予約
+        demoTimeoutId = setTimeout(playNext, getChordInterval());
     };
 
     playNext();
-    demoIntervalId = setInterval(playNext, 1800); // 1.8秒ごとに次のコードへ
 }
 
-// すべてのデモを停止してUIを元に戻す関数
 function stopDemo() {
-    if (!demoIntervalId) return;
+    if (!demoTimeoutId) return;
 
-    clearInterval(demoIntervalId);
-    demoIntervalId = null;
+    clearTimeout(demoTimeoutId);
+    demoTimeoutId = null;
     currentDemoSong = null;
 
     // 全ボタンのスタイルとテキストを一括リセット

@@ -50,6 +50,11 @@
         <button id="btn-youDBeSoNice" onclick="toggleDemo('youDBeSoNice')">▶ You'd Be (Demo)</button>
         <!-- ▲▲ ここまで追加 ▲▲ -->
     </div>
+    
+    <div class="tempo-container">
+        <label for="tempo-slider">TEMPO: <span id="tempo-val">96</span> BPM</label>
+        <input type="range" id="tempo-slider" min="60" max="180" value="96" oninput="updateTempo(this.value)">
+    </div>
 
     <div id="ime-keyboard">
         <div class="ime-key" data-root="C">C 
