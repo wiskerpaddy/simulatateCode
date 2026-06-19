@@ -80,9 +80,14 @@ body {
 }
 
 #current-chord {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: var(--accent-color);
+    color: #fff;
+    text-shadow: 0 0 10px #00adb5;
+    transition: all 0.5s ease;
+
+    /* ▼▼ 長いコードネーム（m7(b5)など）の見切れ・はみ出し対策 ▼▼ */
+    font-size: clamp(1.6rem, 7vw, 2.6rem); /* 画面幅（vw）に合わせて、最小1.6rem〜最大2.6remの間で自動縮小します */
+    white-space: nowrap;                   /* 文字が途中で勝手に改行されるのを防ぎます */
+    text-align: center;
 }
 
 /* 3段目：キーボード */
@@ -234,12 +239,17 @@ body {
     background: #111;
 }
 
-/* --- 通常状態（青いネオン） --- */
+/* もし親要素（display-box）に横幅の制限や余白がない場合は、以下も合わせて確認・追記してください */
 .display-box {
     background: #051a1a;
     border: 2px solid #00adb5;
     box-shadow: inset 0 0 10px #00adb5;
-    transition: all 0.5s ease; /* 変化を滑らかに */
+    transition: all 0.5s ease;
+    
+    /* ▼▼ コンテナが文字に潰されたり、はみ出したりするのを防ぐ設定 ▼▼ */
+    padding: 10px 15px;      /* 左右にしっかり余白を確保 */
+    box-sizing: border-box;  /* パディングを含めたサイズ計算にする */
+    overflow: hidden;        /* 万が一の枠外へのはみ出しを物理的にカット */
 }
 
 #current-chord {
