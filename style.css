@@ -140,70 +140,81 @@ body {
 }
 /* --- 2段目：インフォパネルの強化 --- */
 #info-panel {
-    height: 100px;
+    height: 105px; /* 高さを100pxから105pxにわずかに広げて縦のプロポーションを安定化 */
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px; /* 隙間を少し狭くして3つ並べる */
-    padding: 0 5px;
+    gap: 10px; /* ボックス間の隙間 */
+    padding: 0 8px;
 }
 
-.display-main, .display-sub {
-    flex: 1;
-    min-width: 100px; /* 3つ並ぶので少し小さめに設定 */
+/* 左側のCHORD表示ボックス */
+.display-main {
+    flex: 1; /* 横幅の比率を1にする */
+    min-width: 120px;
     background: #051a1a;
     border: 2px solid #00adb5;
     border-radius: 4px;
-    padding: 5px 15px;
-    box-shadow: inset 0 0 10px #00adb5; /* 内側に光る */
+    padding: 8px 5px;
+    box-shadow: inset 0 0 10px #00adb5;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    box-sizing: border-box; /* パディングを含めたサイズ計算 */
+    box-sizing: border-box;
+}
+
+/* 右側の設定用ボックス（縦並びから3列のグリッドに変更） */
+.display-sub {
+    flex: 1.8; /* セレクトが3つ横に並ぶため、左側より少し広めの比率（1.8）にする */
+    min-width: 180px;
+    background: #051a1a;
+    border: 2px solid #00adb5;
+    border-radius: 4px;
+    padding: 8px 10px;
+    box-shadow: inset 0 0 10px #00adb5;
+    
+    /* ▼ CSS Gridを使ってHTMLを書き換えずに3列×2行（上段ラベル、下段セレクト）にする */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 均等に3列 */
+    grid-template-rows: auto auto;         /* 2行（ラベル行とセレクト行） */
+    grid-auto-flow: column;               /* 要素を縦に埋めてから次の列へ進める（超重要） */
+    align-items: center;
+    justify-items: center;
+    gap: 2px 6px; /* 縦の隙間2px、横の隙間6px */
+    box-sizing: border-box;
 }
 
 .display-label {
     font-size: 0.6rem;
     color: #00adb5;
     letter-spacing: 1px;
-    margin-bottom: 2px;
+    text-align: center;
 }
 
 #current-chord {
-    font-size: 2rem;
+    font-size: 1.6rem; /* 文字のはみ出しを防ぐため2remから1.6remに微調整 */
     color: #fff;
     text-shadow: 0 0 10px #00adb5;
     font-family: 'Courier New', monospace;
-    min-width: 100px;
     width: 100%;
     text-align: center;
 }
 
-/* セレクトボックスの装飾 */
-#inst-select {
+/* 各セレクトボックスの共通スタイル調整 */
+#inst-select, #octave-select, #jazz-mode-select {
     background: transparent;
     color: #fff;
     border: none;
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* 3つ並べるため少しフォントを小さく（0.9rem -> 0.8rem） */
     font-family: 'Courier New', monospace;
     outline: none;
     cursor: pointer;
-    appearance: none; /* デフォルトの矢印を消してスッキリさせる（任意） */
+    appearance: none;
     -webkit-appearance: none;
-}
-
-/* セレクトボックスの装飾 */
-#octave-select {
-    background: transparent;
-    color: #fff;
-    border: none;
-    font-size: 0.9rem;
-    font-family: 'Courier New', monospace;
-    outline: none;
-    cursor: pointer;
-    appearance: none; /* デフォルトの矢印を消してスッキリさせる（任意） */
-    -webkit-appearance: none;
+    width: 100%;
+    text-align: center;
+    text-align-last: center; /* iOS/Androidでも文字が中央に寄るように設定 */
 }
 
 /* 5秒後に適用するスタイル（光を弱める） */
@@ -274,4 +285,17 @@ body {
 /* 黒鍵用の上書き */
 .black-key.key-active-off {
     background-color: #333 !important; /* 黒鍵の元の色 */
+}
+
+/* ジャズモード用のセレクトボックス装飾 */
+#jazz-mode-select {
+    background: transparent;
+    color: #fff;
+    border: none;
+    font-size: 0.9rem;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
 }

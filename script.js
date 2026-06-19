@@ -39,59 +39,44 @@ function initKeyboard() {
 // ページ読み込み完了時に実行
 document.addEventListener('DOMContentLoaded', initKeyboard);
 
-// --- 1. 音源設定 ---
+// --- 1. 高品質サンプラーの定義（安定パス版） ---
 const reverb = new Tone.Reverb(1.5).toDestination();
-let effectTimer = null; // タイマー管理用変数
-// 【本物のピアノ】
+
+// エレキギター
+const electricGuitar = new Tone.Sampler({
+    urls: {
+        "A2": "A2.mp3",
+        "C3": "C3.mp3",
+        "D3": "D3.mp3",
+        "G3": "G3.mp3"
+    },
+    baseUrl: "https://nbrosowsky.github.io/tonejs-instruments/samples/guitar-electric/",
+    onload: () => console.log("Electric Guitar Ready")
+}).connect(reverb);
+
+
+// ウッドベース（コントラバス）：低音のA1, G1などを指定
+const uprightBass = new Tone.Sampler({
+    urls: { "A1": "A1.mp3", "E2": "E2.mp3", "G1": "G1.mp3" },
+    baseUrl: "https://nbrosowsky.github.io/tonejs-instruments/samples/contrabass/",
+    onload: () => console.log("Upright Bass Ready")
+}).connect(reverb);
+
+// ピアノ（最高峰のフリーサンプル Salamander Piano）
 const piano = new Tone.Sampler({
     urls: { "A1": "A1.mp3", "A2": "A2.mp3", "A3": "A3.mp3", "A4": "A4.mp3" },
     baseUrl: "https://tonejs.github.io/audio/salamander/",
-    onload: () => console.log("Piano Ready")
+    onload: () => console.log("Piano Loaded")
 }).connect(reverb);
 
-// 【本物のギター】
-const guitar = new Tone.Sampler({
-    urls: {
-        "A2": "A2.mp3",
-        "E2": "E2.mp3",
-        "G3": "G3.mp3"
-    },
-    baseUrl: "https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/guitar-acoustic/",
-    onload: () => console.log("Guitar Ready")
-}).connect(reverb);
-
-// --- synth（第2音源）をサンプラーに変更 ---
-const synth = new Tone.Sampler({
-    urls: {
-        "A0": "A0.mp3",
-        "C1": "C1.mp3",
-        "D#1": "Ds1.mp3",
-        "F#1": "Fs1.mp3",
-        "A1": "A1.mp3"
-    },
-    // ファイル名が確実に一致する別のリポジトリ
-    baseUrl: "https://tonejs.github.io/audio/salamander/", 
-    onload: () => console.log("Second Sampler Ready")
-}).connect(reverb);
-
-// 最初はピアノをセット
 let currentInstrument = piano;
 
-// 楽器切り替え関数（ここが重要です！）
+// 楽器切り替え
 function setInstrument(type) {
-    // 全ての音を一度止める
-    piano.releaseAll();
-    guitar.releaseAll();
-    synth.releaseAll();
-
-    if (type === 'piano') {
-        currentInstrument = piano;
-    } else if (type === 'guitar') {
-        currentInstrument = guitar;
-    } else {
-        currentInstrument = synth;
-    }
-    console.log("Switched to:", type);
+    [piano, electricGuitar, uprightBass].forEach(i => i.releaseAll());
+    if (type === 'electricGuitar') currentInstrument = electricGuitar;
+    else if (type === 'uprightBass') currentInstrument = uprightBass;
+    else currentInstrument = piano;
 }
 
 // --- 1. 音源設定 (Tone.js) ---
@@ -193,89 +178,93 @@ keys.forEach(key => {
     key.addEventListener('mouseup', endAction);
 });
 
-// --- 3. 発音ロジックの改良（ボイスリーディング対応版） ---
 function playChord(root, quality) {
     if (keyboardEffectTimer) clearTimeout(keyboardEffectTimer);
 
     const octaveSelect = document.getElementById('octave-select');
-    // UIで選んだオクターブ (3, 4, 5)
     const selectedOctave = octaveSelect ? parseInt(octaveSelect.value) : 4;
 
-    // 表示系エフェクトのリセット
-    const displayBox = document.querySelector('.display-main');
-    if (displayBox) displayBox.classList.remove('effect-off');
     document.querySelectorAll('.white-key, .black-key').forEach(k => {
         k.classList.remove('key-active', 'key-active-off');
     });
 
-    const rootName = root.replace(/[0-9]/g, ''); 
-    const rootIdx = NOTE_MAP.indexOf(rootName);
+    let rootName = root.replace(/[0-9]/g, ''); 
+    let rootIdx = NOTE_MAP.indexOf(rootName);
     if (rootIdx === -1) return;
 
-    // 1. 和音の構成音（音名）を計算
-    const chordNotesNames = CHORD_INTERVALS[quality].map(interval => {
-        return NOTE_MAP[(rootIdx + interval) % 12];
-    });
+    // --- ▼▼ ジャズモード（E♭移調）のロジックを追加 ▼▼ ---
+    const jazzModeSelect = document.getElementById('jazz-mode-select');
+    const isJazzMode = jazzModeSelect && jazzModeSelect.value === 'on';
+    
+    // 画面に「押したキー（表記音）」と「鳴っている音（実音）」の両方を表示するための変数
+    let originalRootName = rootName; 
 
-    // 2. 最適なボイシング（MIDI番号）を計算
-    // selectedOctaveが3なら、MIDI番号48(C3)付近を基準に和音を作る
+    if (isJazzMode) {
+        // アルトサックス（E♭管）の表記音から実音へ：短3度（3半音）上げる
+        rootIdx = (rootIdx + 3) % 12;
+        rootName = NOTE_MAP[rootIdx];
+    }
+    // --- ▲▲ ここまで追加 ▲▲ ---
+
+    const chordNotesNames = CHORD_INTERVALS[quality].map(interval => NOTE_MAP[(rootIdx + interval) % 12]);
     const bestMidiNotes = getBestInversion(chordNotesNames, selectedOctave);
     
-    // 3. ベース音の準備（音は鳴らすが、光らせないリスト）
-    // 選択オクターブの1オクターブ下をベースとする
-    const bassMidi = (NOTE_MAP.indexOf(rootName) + (selectedOctave + 1) * 12);
-    const playNotes = [bassMidi, ...bestMidiNotes].map(n => Tone.Frequency(n, "midi").toNote());
-
-    // 4. 発音処理
-    currentInstrument.releaseAll();
-    if (currentInstrument === guitar) {
-        currentInstrument.triggerAttackRelease(playNotes[0], "2n", Tone.now());
-        bestMidiNotes.forEach((midi, i) => {
-            const note = Tone.Frequency(midi, "midi").toNote();
-            currentInstrument.triggerAttackRelease(note, "2n", Tone.now() + 0.05 + (i * 0.05));
-        });
-    } else {
-        currentInstrument.triggerAttackRelease(playNotes, "2n");
+    // --- ベース音の計算修正 ---
+    let bassMidi = (NOTE_MAP.indexOf(rootName) + (selectedOctave + 1) * 12);
+    
+    if (currentInstrument === uprightBass) {
+        bassMidi -= 12; 
     }
 
-    // --- 表示処理 ---
-    const display = document.getElementById('current-chord');
-    if (display) display.innerText = rootName + (quality === "Major" ? "" : quality);
+    const bassNote = Tone.Frequency(bassMidi, "midi").toNote();
+    const chordNotes = bestMidiNotes.map(n => Tone.Frequency(n, "midi").toNote());
 
-    // 【重要】和音の構成音（bestMidiNotes）だけを光らせる
+    currentInstrument.releaseAll();
+
+    if (currentInstrument === uprightBass) {
+        currentInstrument.triggerAttackRelease(bassNote, "8n");
+    } else if (currentInstrument === electricGuitar) {
+        currentInstrument.triggerAttackRelease(bassNote, "2n", Tone.now());
+        chordNotes.forEach((note, i) => {
+            currentInstrument.triggerAttackRelease(note, "2n", Tone.now() + 0.05 + (i * 0.04));
+        });
+    } else {
+        currentInstrument.triggerAttackRelease([bassNote, ...chordNotes], "2n");
+    }
+
+    // --- ▼▼ コード名表示の修正 ▼▼ ---
+    const display = document.getElementById('current-chord');
+    if (display) {
+        const chordQualityText = (quality === "Major" ? "" : quality);
+        if (isJazzMode) {
+            // ジャズモード時は「表記音(実音)」の形式で表示（例：C(Eb)m7）
+            display.innerText = `${originalRootName}(${rootName})${chordQualityText}`;
+        } else {
+            display.innerText = rootName + chordQualityText;
+        }
+    }
+    // --- ▲▲ ここまで修正 ▲▲ ---
+
     bestMidiNotes.forEach(midi => {
-        // MIDI番号から音名+オクターブを取得 (例: 48 -> "C3")
         const noteWithOct = Tone.Frequency(midi, "midi").toNote();
-        
-        // 画面上の鍵盤（C2〜D4）にマッピングするための調整
-        // MIDI番号48はC3ですが、画面の構成に合わせてオクターブ値を-1して検索します
         const name = noteWithOct.replace(/[0-9]/g, '');
         const oct = parseInt(noteWithOct.replace(/[^0-9]/g, ''));
-        const displayNote = name + (oct - 1); // 画面のデータ属性(data-note)に合わせる
-
+        const displayNote = name + (oct - 1); 
         const el = document.querySelector(`[data-note="${displayNote}"]`);
         if (el) el.classList.add('key-active');
     });
 
-    keyboardEffectTimer = setTimeout(() => {
-        document.querySelectorAll('.key-active').forEach(k => k.classList.add('key-active-off'));
-    }, 5000);
-
-    // 7. スクロール（新しく光った鍵盤へ自動フォーカス）
-    // 少し遅らせて実行することで、描画タイミングとのズレを防ぎます
     setTimeout(() => {
         const activeKeys = document.querySelectorAll('.key-active');
         if (activeKeys.length > 0) {
-            // 最初（一番左側）の活動鍵盤を中央付近に表示
-            activeKeys[0].scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest', 
-                inline: 'center' 
-            });
+            activeKeys[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
     }, 50);
-}
 
+    keyboardEffectTimer = setTimeout(() => {
+        document.querySelectorAll('.key-active').forEach(k => k.classList.add('key-active-off'));
+    }, 5000);
+}
 /**
  * ターゲットオクターブを考慮した最短距離計算
  */
