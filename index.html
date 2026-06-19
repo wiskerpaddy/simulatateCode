@@ -24,7 +24,8 @@
             <div class="display-label">INSTRUMENT</div>
             <select id="inst-select" onchange="setInstrument(this.value)">
                 <option value="piano">Acoustic Piano</option>
-                <option value="guitar">Acoustic Guitar</option>
+                <option value="electricGuitar">Electric Guitar</option> 
+                <option value="uprightBass">Upright Bass</option>      
                 <option value="synth">Poly Synth</option>
             </select>
             <div class="display-label">OCTAVE</div>
@@ -32,6 +33,11 @@
                 <option value="3">3 (Low)</option>
                 <option value="4" selected>4 (Mid)</option>
                 <option value="5">5 (High)</option>
+            </select>
+            <div class="display-label">JAZZ MODE</div>
+            <select id="jazz-mode-select">
+                <option value="off" selected>OFF (C)</option>
+                <option value="on">ON (E♭)</option>
             </select>
         </div>
     </div>
