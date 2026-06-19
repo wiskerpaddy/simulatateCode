@@ -356,12 +356,13 @@ const DEMO_SONGS = {
         { root: 'F', quality: 'M7' }, { root: 'B', quality: 'm7(b5)' },
         { root: 'E', quality: '7(b9)' }
     ],
-    // ★ Just the Two of Us（都会的でエモい王道ループ進行）
     justTwo: [
-        { root: 'F', quality: 'M7' },       // FM7
-        { root: 'E', quality: '7(b9)' },    // E7(b9)（超重要！これであのお洒落さが出ます）
-        { root: 'A', quality: 'm7' },       // Am7
-        { root: 'C', quality: '7' }         // C7
+        { root: 'F', quality: 'M7' },       // 1. F (よりジャジーにするためM7にしています)
+        { root: 'E', quality: '7' },        // 2. E7 (ここをお洒落な '7(b9)' にしてもカッコいいです)
+        { root: 'A', quality: 'm7' },       // 3. Am7
+        { root: 'G', quality: 'm7' },       // 4. Gm7 （次への架け橋となるマイナーセブン）
+        { root: 'C', quality: '7' },        // 5. C7  （ドミナント・モーション）
+        { root: 'F', quality: 'M7' }        // 6. F   （頭に戻る）
     ],
     // ★ You'd Be So Nice to Come Home To（哀愁漂う4度進行とツーファイブ）
     youDBeSoNice: [
