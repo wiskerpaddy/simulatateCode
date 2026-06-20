@@ -450,6 +450,12 @@ function toggleDemo(songKey) {
             // 通常通りのコード再生
             playChord(chord.root, chord.quality);
         }
+        
+        demoIndex = (demoIndex + 1) % song.length;
+        
+        // 動的に割り出したdelay（待機時間）を使って次のタイマーを回す
+        demoTimeoutId = setTimeout(playNext, delay);
+    };
     playNext();
 }
 
