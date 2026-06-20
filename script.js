@@ -427,15 +427,22 @@ function toggleDemo(songKey) {
         btn.innerText = `■ ${DEMO_TITLES[songKey]} (Stop)`;
     }
 
-    // テンポ変更が次のコードへ即座に反映されるよう、1拍ごとに秒数を計算してループさせる
     const playNext = () => {
         const chord = song[demoIndex];
+        
+        // --- ★拍数（beats）とBPMから、次のコードまでのミリ秒を動的に計算する高精度ロジック ★ ---
+        const oneBeatMs = 60000 / currentBpm;  // 1拍あたりのミリ秒
+        const beats = chord.beats || 4;        // 設定がないデータはデフォルト4拍
+        const delay = oneBeatMs * beats;       // このステップの長さ（ms）
         
         if (chord.rest) {
             // 休符データの場合は音を止めてインジケータを待機状態に
             currentInstrument.releaseAll();
             const display = document.getElementById('current-chord');
-            if (display) display.innerText = "⏳ (BREAK)";
+            
+            // データ内に記述した displayText（🔄 LOOP など）があればそれを、無ければBREAKを表示
+            if (display) display.innerText = chord.displayText || "⏳ (BREAK)";
+            
             document.querySelectorAll('.white-key, .black-key').forEach(k => {
                 k.classList.remove('key-active', 'key-active-off');
             });
@@ -443,14 +450,6 @@ function toggleDemo(songKey) {
             // 通常通りのコード再生
             playChord(chord.root, chord.quality);
         }
-        // ▲▲▲ ここまで ▲▲▲
-
-        demoIndex = (demoIndex + 1) % song.length;
-        
-        // その時点でのBPMから割り出した間隔で、次のコードの再生を予約
-        demoTimeoutId = setTimeout(playNext, getChordInterval());
-    };
-
     playNext();
 }
 
