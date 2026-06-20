@@ -338,12 +338,13 @@ let currentBpm = 96;     // 初期テンポ（BPM=96）
 // 曲のタイトル定義（ボタンの文字切り替え用）
 const DEMO_TITLES = {
     autumnLeaves: "枯葉",
-    odoLoop: "王道進行ループ",
-    canon: "カノン進行",
-    jazz1625: "Jazz 1-6-2-5"
+    flyMe: "Fly Me",
+    justTwo: "Just Two",
+    youDBeSoNice: "You'd Be",
+    virtualInsanity: "V. Insanity" // 前回のJamiroquaiも統合
 };
 
-// 名曲のコード進行データ（サックス表記音ベース / すべて白鍵ルートで演奏可能）
+// duration: 次のコードに進むまでの時間(ms) | rest: true で休符（ブレイク）
 const DEMO_SONGS = {
     autumnLeaves: [
         { root: 'D', quality: 'm7' }, { root: 'G', quality: '7' },
@@ -351,35 +352,37 @@ const DEMO_SONGS = {
         { root: 'B', quality: 'm7(b5)' }, { root: 'E', quality: '7(b9)' },
         { root: 'A', quality: 'm7' }
     ],
-    // 2. 王道J-POP進行（4コードループ）
-    odoLoop: [
-        { root: 'F', quality: 'M7' },
-        { root: 'E', quality: '7' },
-        { root: 'A', quality: 'm7' },
-        { root: 'C', quality: '7' }
+    flyMe: [
+        { root: 'A', quality: 'm7' }, { root: 'D', quality: 'm7' },
+        { root: 'G', quality: '7' }, { root: 'C', quality: 'M7' },
+        { root: 'F', quality: 'M7' }, { root: 'B', quality: 'm7(b5)' },
+        { root: 'E', quality: '7(b9)' }
+    ],
+    youDBeSoNice: [
+        { root: 'A', quality: 'm7' }, { root: 'B', quality: '7(b9)' }, { root: 'E', quality: 'm7' }, { root: 'E', quality: 'm7' },
+        { root: 'A', quality: 'm7' }, { root: 'D', quality: '7' },    { root: 'G', quality: 'M7' }, { root: 'G', quality: 'M7' }
+    ],
+    virtualInsanity: [
+        { root: 'E', quality: 'm7' }, { root: 'A', quality: '7' }, { root: 'D', quality: '7' }, { root: 'G', quality: 'M7' },
+        { root: 'C', quality: 'M7' }, { root: 'F#', quality: 'm7(b5)' }, { root: 'B', quality: '7(b9)' }, { root: 'E', quality: 'm' }
     ],
 
-    // 3. カノン進行ループ（8コード）
-    canon: [
-        { root: 'C', quality: 'Major' },
-        { root: 'G', quality: 'Major' },
-        { root: 'A', quality: 'm' },
-        { root: 'E', quality: 'm' },
-        { root: 'F', quality: 'Major' },
-        { root: 'C', quality: 'Major' },
-        { root: 'F', quality: 'Major' },
-        { root: 'G', quality: '7' }
-    ],
+    // ★★★ 本気の Just the Two of Us (BPM 96 タイミング完全再現) ★★★
+    justTwo: [
+        // 【前半：1〜2小節】
+        { root: 'F', quality: 'M7', duration: 938 },       // FM7 (1.5拍：タッ)
+        { root: 'E', quality: '7(b9)', duration: 1562 },    // E7(b9) (2.5拍：タッ)
+        { root: 'A', quality: 'm7', duration: 2188 },       // Am7 (3.5拍：ダーーーン)
+        { rest: true, duration: 312 },                      // 4拍目裏でキレよく無音化！ (0.5拍ブレイク：ッ)
 
-    // 4. ジャズ・ターンアラウンド（1625）
-    jazz1625: [
-        { root: 'C', quality: '6' },
-        { root: 'A', quality: 'm7' },
-        { root: 'D', quality: 'm7' },
-        { root: 'G', quality: '7' }
+        // 【後半：3〜4小節】
+        { root: 'F', quality: 'M7', duration: 938 },       // FM7 (1.5拍)
+        { root: 'E', quality: '7(b9)', duration: 1562 },    // E7(b9) (2.5拍)
+        { root: 'A', quality: 'm7', duration: 1250 },       // Am7 (2拍分キープしてからの...)
+        { root: 'G', quality: 'm7', duration: 625 },        // Gm7 (1拍で素早くチェンジ！：タ)
+        { root: 'C', quality: '7', duration: 625 }          // C7  (1拍で流れるようにサビ頭へ：タ)
     ]
 };
-
 // ==========================================
 // 6. デモ演奏（オートプレイ）ロジック（テンポ可変版）
 // ==========================================
@@ -426,17 +429,14 @@ function toggleDemo(songKey) {
     const playNext = () => {
         const chord = song[demoIndex];
         
-        // ▼▼▼ 【追加】休符（REST）の判定ロジック ▼▼▼
-        if (chord.root === 'REST' || chord.root === 'R') {
-            // 画面のコード表示を休符表示にする
-            const chordDisplay = document.getElementById('current-chord');
-            if (chordDisplay) {
-                chordDisplay.innerText = "𝄾 (REST)";
-            }
-            // 鳴っている鍵盤のネオンを消灯させる
-            document.querySelectorAll('.key-active').forEach(k => k.classList.add('key-active-off'));
-            
-            // ※もし音が伸び続けてしまう場合は、ここにシンセを止める処理（例: releaseAll() など）を入れるとより確実です
+        if (chord.rest) {
+            // 休符データの場合は音を止めてインジケータを待機状態に
+            currentInstrument.releaseAll();
+            const display = document.getElementById('current-chord');
+            if (display) display.innerText = "⏳ (BREAK)";
+            document.querySelectorAll('.white-key, .black-key').forEach(k => {
+                k.classList.remove('key-active', 'key-active-off');
+            });
         } else {
             // 通常通りのコード再生
             playChord(chord.root, chord.quality);
