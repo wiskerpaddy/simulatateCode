@@ -375,22 +375,67 @@ const DEMO_SONGS = {
         { rest: true, beats: 2, displayText: "🔄 LOOP" }
     ],
 
-    // ★★★ Just the Two of Us (BPMが変わってもグルーヴが崩れない完全版) ★★★
+// ★★★ Just the Two of Us：画像2枚分の全展開を完全再現 ★★★
     justTwo: [
-        // 【前半：1〜2小節】
-        { root: 'F', quality: 'M7', beats: 1.5 },       // FM7 (1.5拍：タッ)
-        { root: 'E', quality: '7(b9)', beats: 2.5 },    // E7(b9) (2.5拍：タッ)
-        { root: 'A', quality: 'm7', beats: 3.5 },       // Am7 (3.5拍：ダーーーン)
-        { rest: true, beats: 0.5 },                      // 4拍目裏でキレよく無音化！ (0.5拍ブレイク：ッ)
+        // ====== 【セクション1：メインの王道ループ (画像1枚目)】 ======
+        // 1〜2回目リピート（キレのある0.5拍のブレイク休符を完全に再現！）
+        { root: 'C', quality: 'M7', beats: 1.5, displayText: "🎵 MAIN A" }, // Cmaj7 (1.5拍: タッ)
+        { root: 'B', quality: '7(b9)', beats: 2.5 },                     // B7(b9) (2.5拍: タッ)
+        { root: 'E', quality: 'm7', beats: 3.5 },                        // Em7    (3.5拍: ダーーーン)
+        { rest: true, beats: 0.5, displayText: "⏳ (ッ)" },               // 4拍目裏でスパッとキレよく無音化！
 
-        // 【後半：3〜4小節】
-        { root: 'F', quality: 'M7', beats: 1.5 },       // FM7 (1.5拍)
-        { root: 'E', quality: '7(b9)', beats: 2.5 },    // E7(b9) (2.5拍)
-        { root: 'A', quality: 'm7', beats: 2.0 },       // Am7 (2拍分キープ)
-        { root: 'G', quality: 'm7', beats: 1.0 },       // Gm7 (1拍で素早くチェンジ！：タ)
-        { root: 'C', quality: '7', beats: 1.0 },         // C7  (1拍で流れるようにサビ頭へ：タ)
+        // 3〜4回目（おなじみのサビ終わりパッセージ。流れるようにDm7→G7へ）
+        { root: 'C', quality: 'M7', beats: 1.5 },
+        { root: 'B', quality: '7(b9)', beats: 2.5 },
+        { root: 'E', quality: 'm7', beats: 2.0 },                        // Em7 を2拍キープしてから...
+        { root: 'D', quality: 'm7', beats: 1.0 },                        // Dm7 (1拍で素早くチェンジ！: タ)
+        { root: 'G', quality: '7', beats: 1.0 },                         // G7  (1拍で転がるように次へ: タ)
+
+        // もうワンループ挟んで、スムーズに画像2枚目のブリッジへ繋ぎます
+        { root: 'C', quality: 'M7', beats: 1.5, displayText: "🎵 MAIN B" },
+        { root: 'B', quality: '7(b9)', beats: 2.5 },
+        { root: 'E', quality: 'm7', beats: 3.5 },
+        { rest: true, beats: 0.5, displayText: "⏳ (ッ)" },
+
+        { root: 'C', quality: 'M7', beats: 1.5 },
+        { root: 'B', quality: '7(b9)', beats: 2.5 },
+        { root: 'E', quality: 'm7', beats: 4.0 },                        // ここはブレイクせず、たっぷり4拍伸ばす！
+
+        // ====== 【セクション2：お洒落すぎる下降ブリッジ (画像2枚目の前半)】 ======
+        // Cmaj7 -> B7 -> A#maj7 -> A7 （ここもメインのハネるリズムを踏襲させて激エモに！）
+        { root: 'C', quality: 'M7', beats: 1.5, displayText: "🎷 BRIDGE 1" },
+        { root: 'B', quality: '7(b9)', beats: 2.5 },
+        { root: 'A#', quality: 'M7', beats: 1.5 },                       // 黒鍵ルートのA#もアプリ内部マップで完全対応！
+        { root: 'A', quality: '7', beats: 2.5 },
         
-        // ★曲の終わりにたっぷり「4拍分（1小節）」のブレイクを挟んで、頭に戻る合図を出す！
+        // G#maj7 -> G7 -> Cmaj7 -> F6 
+        { root: 'G#', quality: 'M7', beats: 1.5 },
+        { root: 'G', quality: '7', beats: 2.5 },
+        { root: 'C', quality: 'M7', beats: 2.0 },
+        { root: 'F', quality: '6', beats: 2.0 },                          // F6 の哀愁ある響きで着地
+
+        // ブリッジのリピート（画像2枚目の3〜4行目）
+        { root: 'C', quality: 'M7', beats: 1.5, displayText: "🎷 BRIDGE 2" },
+        { root: 'B', quality: '7(b9)', beats: 2.5 },
+        { root: 'A#', quality: 'M7', beats: 1.5 },
+        { root: 'A', quality: '7', beats: 2.5 },
+        
+        { root: 'G#', quality: 'M7', beats: 1.5 },
+        { root: 'G', quality: '7', beats: 2.5 },
+        { root: 'C', quality: 'M7', beats: 2.0 },
+        { root: 'F', quality: '6', beats: 2.0 },
+
+        // ====== 【セクション3：ラストの締めから次のループへの架け橋 (画像2枚目の後半)】 ======
+        { root: 'C', quality: 'M7', beats: 1.5, displayText: "🎵 OUTRO" },
+        { root: 'B', quality: '7(b9)', beats: 2.5 },
+        { root: 'E', quality: 'm7', beats: 3.5 },
+        { rest: true, beats: 0.5, displayText: "⏳ (ッ)" },
+
+        { root: 'C', quality: 'M7', beats: 1.5 },
+        { root: 'B', quality: '7(b9)', beats: 2.5 },
+        { root: 'E', quality: 'm7', beats: 4.0 },
+        
+        // ★ 1周終わったことがハッキリ分かるよう、丸々1小節（4拍分）の特大ブレイク＆ループ表示を挿入！
         { rest: true, beats: 4.0, displayText: "🔄 NEXT LOOP" }
     ]
 };
