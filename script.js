@@ -335,52 +335,54 @@ let currentDemoSong = null;
 let demoIndex = 0;
 let currentBpm = 96;     // 初期テンポ（BPM=96）
 
-// 曲のタイトル定義（ボタンの文字切り替え用）
-const DEMO_TITLES = {
-    autumnLeaves: "枯葉",
-    flyMe: "Fly Me",
-    justTwo: "Just Two",
-    youDBeSoNice: "You'd Be",
-    virtualInsanity: "V. Insanity" // 前回のJamiroquaiも統合
-};
-
-// duration: 次のコードに進むまでの時間(ms) | rest: true で休符（ブレイク）
+// 【進化版】時間をms固定ではなく、BPMと連動する「拍数（beats）」で管理します
 const DEMO_SONGS = {
     autumnLeaves: [
-        { root: 'D', quality: 'm7' }, { root: 'G', quality: '7' },
-        { root: 'C', quality: 'M7' }, { root: 'F', quality: 'M7' },
-        { root: 'B', quality: 'm7(b5)' }, { root: 'E', quality: '7(b9)' },
-        { root: 'A', quality: 'm7' }
+        { root: 'D', quality: 'm7', beats: 4 }, { root: 'G', quality: '7', beats: 4 },
+        { root: 'C', quality: 'M7', beats: 4 }, { root: 'F', quality: 'M7', beats: 4 },
+        { root: 'B', quality: 'm7(b5)', beats: 4 }, { root: 'E', quality: '7(b9)', beats: 4 },
+        { root: 'A', quality: 'm7', beats: 4 },
+        // ★曲の終わりに「2拍分」のブレイク（無音）と専用表示を挿入！
+        { rest: true, beats: 2, displayText: "🔄 LOOP" }
     ],
     flyMe: [
-        { root: 'A', quality: 'm7' }, { root: 'D', quality: 'm7' },
-        { root: 'G', quality: '7' }, { root: 'C', quality: 'M7' },
-        { root: 'F', quality: 'M7' }, { root: 'B', quality: 'm7(b5)' },
-        { root: 'E', quality: '7(b9)' }
+        { root: 'A', quality: 'm7', beats: 4 }, { root: 'D', quality: 'm7', beats: 4 },
+        { root: 'G', quality: '7', beats: 4 }, { root: 'C', quality: 'M7', beats: 4 },
+        { root: 'F', quality: 'M7', beats: 4 }, { root: 'B', quality: 'm7(b5)', beats: 4 },
+        { root: 'E', quality: '7(b9)', beats: 4 },
+        // ★曲の終わりに「2拍分」のブレイクを挿入
+        { rest: true, beats: 2, displayText: "🔄 LOOP" }
     ],
     youDBeSoNice: [
-        { root: 'A', quality: 'm7' }, { root: 'B', quality: '7(b9)' }, { root: 'E', quality: 'm7' }, { root: 'E', quality: 'm7' },
-        { root: 'A', quality: 'm7' }, { root: 'D', quality: '7' },    { root: 'G', quality: 'M7' }, { root: 'G', quality: 'M7' }
+        { root: 'A', quality: 'm7', beats: 4 }, { root: 'B', quality: '7(b9)', beats: 4 }, { root: 'E', quality: 'm7', beats: 4 }, { root: 'E', quality: 'm7', beats: 4 },
+        { root: 'A', quality: 'm7', beats: 4 }, { root: 'D', quality: '7', beats: 4 },    { root: 'G', quality: 'M7', beats: 4 }, { root: 'G', quality: 'M7', beats: 4 },
+        // ★曲の終わりに「2拍分」のブレイクを挿入
+        { rest: true, beats: 2, displayText: "🔄 LOOP" }
     ],
     virtualInsanity: [
-        { root: 'E', quality: 'm7' }, { root: 'A', quality: '7' }, { root: 'D', quality: '7' }, { root: 'G', quality: 'M7' },
-        { root: 'C', quality: 'M7' }, { root: 'F#', quality: 'm7(b5)' }, { root: 'B', quality: '7(b9)' }, { root: 'E', quality: 'm' }
+        { root: 'E', quality: 'm7', beats: 4 }, { root: 'A', quality: '7', beats: 4 }, { root: 'D', quality: '7', beats: 4 }, { root: 'G', quality: 'M7', beats: 4 },
+        { root: 'C', quality: 'M7', beats: 4 }, { root: 'F#', quality: 'm7(b5)', beats: 4 }, { root: 'B', quality: '7(b9)', beats: 4 }, { root: 'E', quality: 'm', beats: 4 },
+        // ★曲の終わりに「2拍分」のブレイクを挿入
+        { rest: true, beats: 2, displayText: "🔄 LOOP" }
     ],
 
-    // ★★★ 本気の Just the Two of Us (BPM 96 タイミング完全再現) ★★★
+    // ★★★ Just the Two of Us (BPMが変わってもグルーヴが崩れない完全版) ★★★
     justTwo: [
         // 【前半：1〜2小節】
-        { root: 'F', quality: 'M7', duration: 938 },       // FM7 (1.5拍：タッ)
-        { root: 'E', quality: '7(b9)', duration: 1562 },    // E7(b9) (2.5拍：タッ)
-        { root: 'A', quality: 'm7', duration: 2188 },       // Am7 (3.5拍：ダーーーン)
-        { rest: true, duration: 312 },                      // 4拍目裏でキレよく無音化！ (0.5拍ブレイク：ッ)
+        { root: 'F', quality: 'M7', beats: 1.5 },       // FM7 (1.5拍：タッ)
+        { root: 'E', quality: '7(b9)', beats: 2.5 },    // E7(b9) (2.5拍：タッ)
+        { root: 'A', quality: 'm7', beats: 3.5 },       // Am7 (3.5拍：ダーーーン)
+        { rest: true, beats: 0.5 },                      // 4拍目裏でキレよく無音化！ (0.5拍ブレイク：ッ)
 
         // 【後半：3〜4小節】
-        { root: 'F', quality: 'M7', duration: 938 },       // FM7 (1.5拍)
-        { root: 'E', quality: '7(b9)', duration: 1562 },    // E7(b9) (2.5拍)
-        { root: 'A', quality: 'm7', duration: 1250 },       // Am7 (2拍分キープしてからの...)
-        { root: 'G', quality: 'm7', duration: 625 },        // Gm7 (1拍で素早くチェンジ！：タ)
-        { root: 'C', quality: '7', duration: 625 }          // C7  (1拍で流れるようにサビ頭へ：タ)
+        { root: 'F', quality: 'M7', beats: 1.5 },       // FM7 (1.5拍)
+        { root: 'E', quality: '7(b9)', beats: 2.5 },    // E7(b9) (2.5拍)
+        { root: 'A', quality: 'm7', beats: 2.0 },       // Am7 (2拍分キープ)
+        { root: 'G', quality: 'm7', beats: 1.0 },       // Gm7 (1拍で素早くチェンジ！：タ)
+        { root: 'C', quality: '7', beats: 1.0 },         // C7  (1拍で流れるようにサビ頭へ：タ)
+        
+        // ★曲の終わりにたっぷり「4拍分（1小節）」のブレイクを挟んで、頭に戻る合図を出す！
+        { rest: true, beats: 4.0, displayText: "🔄 NEXT LOOP" }
     ]
 };
 // ==========================================
