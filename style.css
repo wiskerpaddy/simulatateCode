@@ -80,9 +80,14 @@ body {
 }
 
 #current-chord {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: var(--accent-color);
+    color: #fff;
+    text-shadow: 0 0 10px #00adb5;
+    transition: all 0.5s ease;
+
+    /* ▼▼ 長いコードネーム（m7(b5)など）の見切れ・はみ出し対策 ▼▼ */
+    font-size: clamp(1.6rem, 7vw, 2.6rem); /* 画面幅（vw）に合わせて、最小1.6rem〜最大2.6remの間で自動縮小します */
+    white-space: nowrap;                   /* 文字が途中で勝手に改行されるのを防ぎます */
+    text-align: center;
 }
 
 /* 3段目：キーボード */
@@ -234,12 +239,17 @@ body {
     background: #111;
 }
 
-/* --- 通常状態（青いネオン） --- */
+/* もし親要素（display-box）に横幅の制限や余白がない場合は、以下も合わせて確認・追記してください */
 .display-box {
     background: #051a1a;
     border: 2px solid #00adb5;
     box-shadow: inset 0 0 10px #00adb5;
-    transition: all 0.5s ease; /* 変化を滑らかに */
+    transition: all 0.5s ease;
+    
+    /* ▼▼ コンテナが文字に潰されたり、はみ出したりするのを防ぐ設定 ▼▼ */
+    padding: 10px 15px;      /* 左右にしっかり余白を確保 */
+    box-sizing: border-box;  /* パディングを含めたサイズ計算にする */
+    overflow: hidden;        /* 万が一の枠外へのはみ出しを物理的にカット */
 }
 
 #current-chord {
@@ -298,4 +308,79 @@ body {
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
+}
+
+/* 新設したジャズコード用のガイド位置調整 */
+.guide-left {
+    left: 8px;
+}
+.guide-down-left {
+    bottom: 5px;
+    left: 8px;
+    font-size: 0.6rem;
+}
+.guide-down-right {
+    bottom: 5px;
+    right: 8px;
+    font-size: 0.6rem;
+}
+
+#demo-controls {
+    height: auto; /* 高さを自動可変に */
+    min-height: 40px;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px; /* 隙間を少しタイトに */
+    border-bottom: 1px solid #222;
+    padding: 8px 10px; /* 上下に少し余白を持たせる */
+    flex-wrap: wrap; /* ★ 画面が狭いときは2列に折り返す */
+}
+
+#demo-controls button {
+    flex: 1;
+    min-width: 120px; /* 最低幅を決めておく */
+    max-width: 160px;
+    background: #111;
+    color: #00adb5;
+    border: 1px solid #00adb5;
+    border-radius: 6px;
+    padding: 6px 0;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 5px rgba(0, 173, 181, 0.2);
+}
+
+/* 再生中のアクティブ状態 */
+#demo-controls button.playing {
+    background: #00adb5;
+    color: #fff;
+    box-shadow: 0 0 15px #00adb5;
+}
+
+/* --- テンポ調整スライダーのスタイル --- */
+.tempo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    background: #111;
+    border-radius: 5px;
+    border: 1px solid #333;
+    margin: 5px auto;
+}
+
+#tempo-slider {
+    accent-color: var(--accent-color);
+    cursor: pointer;
+    width: 140px;
+    vertical-align: middle;
 }

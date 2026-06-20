@@ -7,6 +7,7 @@
     <title>Chord Flick IME</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="icon.png" type="image/png">
 </head>
 <body>
 
@@ -20,90 +21,166 @@
         </div>
         
         <div class="display-sub">
-            <div class="display-label">INSTRUMENT</div>
+            <div class="display-label">INST</div>
             <select id="inst-select" onchange="setInstrument(this.value)">
-                <option value="piano">Acoustic Piano</option>
-                <option value="electricGuitar">Electric Guitar</option> 
-                <option value="uprightBass">Upright Bass</option>      
-                <option value="synth">Poly Synth</option>
+                <option value="piano">Piano</option>
+                <!-- <option value="electricGuitar">Guitar</option> 
+                <option value="uprightBass">Bass</option> 
+                <option value="synth">Synth</option>      -->
             </select>
             <div class="display-label">OCTAVE</div>
             <select id="octave-select">
-                <option value="3">3 (Low)</option>
-                <option value="4" selected>4 (Mid)</option>
-                <option value="5">5 (High)</option>
+                <option value="3">Low</option>
+                <option value="4" selected>Mid</option>
+                <option value="5">High</option>
             </select>
             <div class="display-label">JAZZ MODE</div>
             <select id="jazz-mode-select">
-                <option value="off" selected>OFF (C)</option>
-                <option value="on">ON (E♭)</option>
+                <option value="off" selected>OFF</option>
+                <option value="on">ON</option>
             </select>
         </div>
+    </div>
+
+<div id="demo-controls">
+        <button id="btn-autumnLeaves" onclick="toggleDemo('autumnLeaves')">▶ 枯葉 (Demo)</button>
+        <button id="btn-flyMe" onclick="toggleDemo('flyMe')">▶ Fly Me (Demo)</button>
+        <button id="btn-justTwo" onclick="toggleDemo('justTwo')">▶ Just Two (Demo)</button>
+        <button id="btn-youDBeSoNice" onclick="toggleDemo('youDBeSoNice')">▶ You'd Be (Demo)</button>
+        <button id="btn-virtualInsanity" onclick="toggleDemo('virtualInsanity')">▶ V. Insanity (Demo)</button>
+    </div>
+    
+    <div class="tempo-container">
+        <label for="tempo-slider">TEMPO: <span id="tempo-val">96</span> BPM</label>
+        <input type="range" id="tempo-slider" min="60" max="180" value="96" oninput="updateTempo(this.value)">
     </div>
 
     <div id="ime-keyboard">
         <div class="ime-key" data-root="C">C 
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
         <div class="ime-key" data-root="D">D 
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
         <div class="ime-key" data-root="E">E 
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
         <div class="ime-key" data-root="F">F
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
         <div class="ime-key" data-root="G">G 
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
         <div class="ime-key" data-root="A">A 
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
         <div class="ime-key" data-root="B">B 
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
         <div class="ime-key" data-root="C5">C↑
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
         <div class="ime-key" data-root="D5">D↑
             <span class="flick-guide guide-up-left">M7</span>
             <span class="flick-guide guide-up">m</span>
-            <span class="flick-guide guide-up-right">sus4</span>
+            <!-- <span class="flick-guide guide-up-right">sus4</span> -->
             <span class="flick-guide guide-right">7</span>
             <span class="flick-guide guide-down">m7</span>
+            
+            <!-- ▼▼ ここから追加・変更 ▼▼ -->
+            <span class="flick-guide guide-up-right">7(b9)</span> <!-- sus4から変更 -->
+            <span class="flick-guide guide-left">m7(b5)</span>     <!-- 左に追加 -->
+            <span class="flick-guide guide-down-left">dim7</span>    <!-- 左下に追加 -->
+            <span class="flick-guide guide-down-right">6</span>      <!-- 右下に追加 -->
+            <!-- ▲▲ ここまで追加・変更 ▲▲ -->
         </div>
     </div>
     

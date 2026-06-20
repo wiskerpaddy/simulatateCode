@@ -123,7 +123,12 @@ const CHORD_INTERVALS = {
     "7": [0, 4, 7, 10], 
     "m7": [0, 3, 7, 10],
     "M7": [0, 4, 7, 11],  // メジャーセブンを追加
-    "sus4": [0, 5, 7]     // サスフォーを追加
+// --- ▼▼ ジャズ用コードを追加・変更 ▼▼ ---
+    "7(b9)": [0, 4, 10, 13],  // sus4を削除し、こちらに差し替え（5度省きボイシング）
+    "m7(b5)": [0, 3, 6, 10], // ルート, ♭3, ♭5, ♭7
+    "dim7": [0, 3, 6, 9],     // ルート, ♭3, ♭5, 6(減7)
+    "6": [0, 4, 7, 9]         // ルート, 3, 5, 6
+    // --- ▲▲ ここまで ▲▲ ---
 };
 const NOTE_MAP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -152,18 +157,23 @@ keys.forEach(key => {
         let quality = "Major";
         const threshold = 30; 
 
-        // 斜め判定を含む8方向認識
-        if (diffY < -threshold && diffX < -threshold) {
-            quality = "M7";   // 左上：M7
-        } else if (diffY < -threshold && diffX > threshold) {
-            quality = "sus4"; // 右上：sus4
-        } else if (diffY < -threshold) {
-            quality = "m";    // 上：m
-        } else if (diffX > threshold) {
-            quality = "7";    // 右：7
+        // ▼▼ 誤判定のない、綺麗な8方向フリック判定ロジック ▼▼
+        if (diffY < -threshold) {
+            // 【上方向グループ】
+            if (diffX < -threshold) quality = "M7";         // 左上
+            else if (diffX > threshold) quality = "7(b9)";  // 右上
+            else quality = "m";                             // 上
         } else if (diffY > threshold) {
-            quality = "m7";   // 下：m7
+            // 【下方向グループ】
+            if (diffX < -threshold) quality = "dim7";       // 左下
+            else if (diffX > threshold) quality = "6";      // 右下
+            else quality = "m7";                            // 下
+        } else {
+            // 【水平方向グループ】
+            if (diffX > threshold) quality = "7";           // 右
+            else if (diffX < -threshold) quality = "m7(b5)";// 左
         }
+        // ▲▲ ここまで ▲▲
 
         let root = key.dataset.root;
         if (!/\d/.test(root)) root += "4";
@@ -304,4 +314,173 @@ function getBestInversion(chordNotes, targetOctave) {
 
     lastAveragePitch = bestPattern.reduce((a, b) => a + b) / bestPattern.length;
     return bestPattern;
-}   
+}  
+
+const startAction = (e) => {
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    
+    // ▼▼ ここに1行追加（手動演奏が始まったらデモを止める） ▼▼
+    stopDemo();
+    
+    if (Tone.context.state !== 'running') {
+        Tone.context.resume();
+    }
+};
+
+// --- ▼▼ デモ演奏（4曲対応版）のロジック ▼▼ ---
+let demoTimeoutId = null; // setIntervalからsetTimeout制御に切り替えるため変更
+let currentDemoSong = null;
+let demoIndex = 0;
+let currentBpm = 96;     // 初期テンポ（BPM=96）
+
+// 曲のタイトル定義（ボタンの文字切り替え用）
+const DEMO_TITLES = {
+    autumnLeaves: "枯葉",
+    flyMe: "Fly Me",
+    justTwo: "Just Two",
+    youDBeSoNice: "You'd Be",
+    virtualInsanity: "V. Insanity"
+};
+
+// 【進化版】時間をms固定ではなく、BPMと連動する「拍数（beats）」で管理します
+const DEMO_SONGS = {
+    autumnLeaves: [
+        { root: 'D', quality: 'm7', beats: 4 }, { root: 'G', quality: '7', beats: 4 },
+        { root: 'C', quality: 'M7', beats: 4 }, { root: 'F', quality: 'M7', beats: 4 },
+        { root: 'B', quality: 'm7(b5)', beats: 4 }, { root: 'E', quality: '7(b9)', beats: 4 },
+        { root: 'A', quality: 'm7', beats: 4 },
+        // ★曲の終わりに「2拍分」のブレイク（無音）と専用表示を挿入！
+        { rest: true, beats: 2, displayText: "🔄 LOOP" }
+    ],
+    flyMe: [
+        { root: 'A', quality: 'm7', beats: 4 }, { root: 'D', quality: 'm7', beats: 4 },
+        { root: 'G', quality: '7', beats: 4 }, { root: 'C', quality: 'M7', beats: 4 },
+        { root: 'F', quality: 'M7', beats: 4 }, { root: 'B', quality: 'm7(b5)', beats: 4 },
+        { root: 'E', quality: '7(b9)', beats: 4 },
+        // ★曲の終わりに「2拍分」のブレイクを挿入
+        { rest: true, beats: 2, displayText: "🔄 LOOP" }
+    ],
+    youDBeSoNice: [
+        { root: 'A', quality: 'm7', beats: 4 }, { root: 'B', quality: '7(b9)', beats: 4 }, { root: 'E', quality: 'm7', beats: 4 }, { root: 'E', quality: 'm7', beats: 4 },
+        { root: 'A', quality: 'm7', beats: 4 }, { root: 'D', quality: '7', beats: 4 },    { root: 'G', quality: 'M7', beats: 4 }, { root: 'G', quality: 'M7', beats: 4 },
+        // ★曲の終わりに「2拍分」のブレイクを挿入
+        { rest: true, beats: 2, displayText: "🔄 LOOP" }
+    ],
+    virtualInsanity: [
+        { root: 'E', quality: 'm7', beats: 4 }, { root: 'A', quality: '7', beats: 4 }, { root: 'D', quality: '7', beats: 4 }, { root: 'G', quality: 'M7', beats: 4 },
+        { root: 'C', quality: 'M7', beats: 4 }, { root: 'F#', quality: 'm7(b5)', beats: 4 }, { root: 'B', quality: '7(b9)', beats: 4 }, { root: 'E', quality: 'm', beats: 4 },
+        // ★曲の終わりに「2拍分」のブレイクを挿入
+        { rest: true, beats: 2, displayText: "🔄 LOOP" }
+    ],
+
+    // ★★★ Just the Two of Us (BPMが変わってもグルーヴが崩れない完全版) ★★★
+    justTwo: [
+        // 【前半：1〜2小節】
+        { root: 'F', quality: 'M7', beats: 1.5 },       // FM7 (1.5拍：タッ)
+        { root: 'E', quality: '7(b9)', beats: 2.5 },    // E7(b9) (2.5拍：タッ)
+        { root: 'A', quality: 'm7', beats: 3.5 },       // Am7 (3.5拍：ダーーーン)
+        { rest: true, beats: 0.5 },                      // 4拍目裏でキレよく無音化！ (0.5拍ブレイク：ッ)
+
+        // 【後半：3〜4小節】
+        { root: 'F', quality: 'M7', beats: 1.5 },       // FM7 (1.5拍)
+        { root: 'E', quality: '7(b9)', beats: 2.5 },    // E7(b9) (2.5拍)
+        { root: 'A', quality: 'm7', beats: 2.0 },       // Am7 (2拍分キープ)
+        { root: 'G', quality: 'm7', beats: 1.0 },       // Gm7 (1拍で素早くチェンジ！：タ)
+        { root: 'C', quality: '7', beats: 1.0 },         // C7  (1拍で流れるようにサビ頭へ：タ)
+        
+        // ★曲の終わりにたっぷり「4拍分（1小節）」のブレイクを挟んで、頭に戻る合図を出す！
+        { rest: true, beats: 4.0, displayText: "🔄 NEXT LOOP" }
+    ]
+};
+// ==========================================
+// 6. デモ演奏（オートプレイ）ロジック（テンポ可変版）
+// ==========================================
+
+// BPMから1コード（4拍分）のミリ秒を計算する関数
+function getChordInterval() {
+    return (240000 / currentBpm); 
+}
+
+// スライダーを動かしたときにリアルタイムで数値を書き換える関数
+function updateTempo(val) {
+    currentBpm = parseInt(val);
+    const tempoVal = document.getElementById('tempo-val');
+    if (tempoVal) tempoVal.innerText = val;
+}
+
+function toggleDemo(songKey) {
+    if (demoTimeoutId && currentDemoSong === songKey) {
+        stopDemo();
+        return;
+    }
+    if (demoTimeoutId) {
+        stopDemo();
+    }
+
+    if (Tone.context.state !== 'running') {
+        Tone.context.resume();
+    }
+
+    const song = DEMO_SONGS[songKey];
+    if (!song) return;
+
+    currentDemoSong = songKey;
+    demoIndex = 0;
+
+    // DEMO_TITLES を使って対象ボタンの表記を Stop に変更
+    const btn = document.getElementById(`btn-${songKey}`);
+    if (btn) {
+        btn.classList.add('playing');
+        btn.innerText = `■ ${DEMO_TITLES[songKey]} (Stop)`;
+    }
+
+    const playNext = () => {
+        const chord = song[demoIndex];
+        
+        // --- ★拍数（beats）とBPMから、次のコードまでのミリ秒を動的に計算する高精度ロジック ★ ---
+        const oneBeatMs = 60000 / currentBpm;  // 1拍あたりのミリ秒
+        const beats = chord.beats || 4;        // 設定がないデータはデフォルト4拍
+        const delay = oneBeatMs * beats;       // このステップの長さ（ms）
+        
+        if (chord.rest) {
+            // 休符データの場合は音を止めてインジケータを待機状態に
+            currentInstrument.releaseAll();
+            const display = document.getElementById('current-chord');
+            
+            // データ内に記述した displayText（🔄 LOOP など）があればそれを、無ければBREAKを表示
+            if (display) display.innerText = chord.displayText || "⏳ (BREAK)";
+            
+            document.querySelectorAll('.white-key, .black-key').forEach(k => {
+                k.classList.remove('key-active', 'key-active-off');
+            });
+        } else {
+            // 通常通りのコード再生
+            playChord(chord.root, chord.quality);
+        }
+
+        demoIndex = (demoIndex + 1) % song.length;
+        
+        // 動的に割り出したdelay（待機時間）を使って次のタイマーを回す
+        demoTimeoutId = setTimeout(playNext, delay);
+    };
+    playNext();
+}
+
+function stopDemo() {
+    if (!demoTimeoutId) return;
+
+    clearTimeout(demoTimeoutId);
+    demoTimeoutId = null;
+    currentDemoSong = null;
+
+// 全てのボタンを DEMO_TITLES を使って元の表記にリセット
+    Object.keys(DEMO_TITLES).forEach(key => {
+        const btn = document.getElementById(`btn-${key}`);
+        if (btn) {
+            btn.classList.remove('playing');
+            btn.innerText = `▶ ${DEMO_TITLES[key]} (Demo)`;
+        }
+    });
+}
