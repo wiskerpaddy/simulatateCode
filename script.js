@@ -335,6 +335,15 @@ let currentDemoSong = null;
 let demoIndex = 0;
 let currentBpm = 96;     // 初期テンポ（BPM=96）
 
+// 曲のタイトル定義（ボタンの文字切り替え用）
+const DEMO_TITLES = {
+    autumnLeaves: "枯葉",
+    flyMe: "Fly Me",
+    justTwo: "Just Two",
+    youDBeSoNice: "You'd Be",
+    virtualInsanity: "V. Insanity"
+};
+
 // 【進化版】時間をms固定ではなく、BPMと連動する「拍数（beats）」で管理します
 const DEMO_SONGS = {
     autumnLeaves: [
@@ -450,7 +459,7 @@ function toggleDemo(songKey) {
             // 通常通りのコード再生
             playChord(chord.root, chord.quality);
         }
-        
+
         demoIndex = (demoIndex + 1) % song.length;
         
         // 動的に割り出したdelay（待機時間）を使って次のタイマーを回す
