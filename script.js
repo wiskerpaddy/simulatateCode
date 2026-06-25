@@ -165,8 +165,8 @@ keys.forEach(key => {
             else quality = "m";                             // 上
         } else if (diffY > threshold) {
             // 【下方向グループ】
-            if (diffX < -threshold) quality = "dim7";       // 左下
-            else if (diffX > threshold) quality = "6";      // 右下
+            if (diffX < -threshold) quality = "flat";       // ★ dim7 から「flat」に変更
+            else if (diffX > threshold) quality = "sharp";   // ★ 6 から「sharp」に変更
             else quality = "m7";                            // 下
         } else {
             // 【水平方向グループ】
@@ -202,12 +202,32 @@ function playChord(root, quality) {
     let rootIdx = NOTE_MAP.indexOf(rootName);
     if (rootIdx === -1) return;
 
+    // --- ▼▼【ここを追加】現在のコードに合わせた flat / sharp 処理 ▼▼ ---
+    let displayRootName = rootName; // 画面表示用の表記（E♭などを綺麗に出すため）
+    
+    if (quality === "flat") {
+        rootIdx = (rootIdx - 1 + 12) % 12; // ルート音を半音下げる（例: E -> D#）
+        rootName = NOTE_MAP[rootIdx];
+        displayRootName = displayRootName + "♭"; // 表示を「E♭」にする
+        quality = "Major";                 // 音の構成自体は通常のメジャーコードとして処理
+    } else if (quality === "sharp") {
+        rootIdx = (rootIdx + 1) % 12;      // ルート音を半音上げる（例: F -> F#）
+        rootName = NOTE_MAP[rootIdx];
+        displayRootName = displayRootName + "＃"; // 表示を「F＃」にする
+        quality = "Major";                 // 音の構成自体は通常のメジャーコードとして処理
+    } else {
+        // 通常フリックの時も、D#やA#のままだと見づらいのでEbやBbに変換するマップ
+        const DISPLAY_CONVERT = { "D#": "E♭", "A#": "B♭", "G#": "A♭" };
+        if (DISPLAY_CONVERT[displayRootName]) displayRootName = DISPLAY_CONVERT[displayRootName];
+    }
+    // --- ▲▲ ここまで ▲▲ ---
+
     // --- ▼▼ ジャズモード（E♭移調）のロジックを追加 ▼▼ ---
     const jazzModeSelect = document.getElementById('jazz-mode-select');
     const isJazzMode = jazzModeSelect && jazzModeSelect.value === 'on';
     
-    // 画面に「押したキー（表記音）」と「鳴っている音（実音）」の両方を表示するための変数
-    let originalRootName = rootName; 
+    // ★ originalRootName をフリック反映後の綺麗な表記（displayRootName）に変更
+    let originalRootName = displayRootName; 
 
     if (isJazzMode) {
         // アルトサックス（E♭管）の表記音から実音へ：短3度（3半音）上げる
@@ -246,11 +266,17 @@ function playChord(root, quality) {
     const display = document.getElementById('current-chord');
     if (display) {
         const chordQualityText = (quality === "Major" ? "" : quality);
+        
+        // 実音（rootName）側も表示用に見やすく変換（D# -> E♭など）
+        const REAL_DISPLAY_CONVERT = { "C#": "C＃", "D#": "E♭", "F#": "F＃", "G#": "A♭", "A#": "B♭" };
+        const realNoteDisplay = REAL_DISPLAY_CONVERT[rootName] || rootName;
+
         if (isJazzMode) {
-            // ジャズモード時は「表記音(実音)」の形式で表示（例：C(Eb)m7）
-            display.innerText = `${originalRootName}(${rootName})${chordQualityText}`;
+            // ジャズモード時は「表記音(実音)」の形式で表示（例：E♭(F＃)）
+            display.innerText = `${originalRootName}(${realNoteDisplay})${chordQualityText}`;
         } else {
-            display.innerText = rootName + chordQualityText;
+            // 通常時はフリックで確定した表記音（例：E♭）
+            display.innerText = originalRootName + chordQualityText;
         }
     }
     // --- ▲▲ ここまで修正 ▲▲ ---
@@ -275,6 +301,7 @@ function playChord(root, quality) {
         document.querySelectorAll('.key-active').forEach(k => k.classList.add('key-active-off'));
     }, 5000);
 }
+
 /**
  * ターゲットオクターブを考慮した最短距離計算
  */
@@ -363,10 +390,59 @@ const DEMO_SONGS = {
         { rest: true, beats: 2, displayText: "🔄 LOOP" }
     ],
     youDBeSoNice: [
-        { root: 'A', quality: 'm7', beats: 4 }, { root: 'B', quality: '7(b9)', beats: 4 }, { root: 'E', quality: 'm7', beats: 4 }, { root: 'E', quality: 'm7', beats: 4 },
-        { root: 'A', quality: 'm7', beats: 4 }, { root: 'D', quality: '7', beats: 4 },    { root: 'G', quality: 'M7', beats: 4 }, { root: 'G', quality: 'M7', beats: 4 },
-        // ★曲の終わりに「2拍分」のブレイクを挿入
-        { rest: true, beats: 2, displayText: "🔄 LOOP" }
+// ====== 【イントロ：静かに、でも印象的に幕を開ける4小節】 ======
+        { root: 'E', quality: 'm7', beats: 4, displayText: "🎵 INTRO" }, // Em7 で悲しげに始まり
+        { root: 'D', quality: '7', beats: 4 },                          // D7
+        { root: 'C', quality: 'M7', beats: 4 },                         // Cmaj7
+        { root: 'B', quality: '7', beats: 4 },                          // B7 で切なくAメロへ誘導
+
+        // ====== 【Aメロ：ベースラインが美しく下降していくセクション】 ======
+        { root: 'E', quality: 'm7', beats: 2, displayText: "🎤 A-MELO 1" }, // あえない夜を
+        { root: 'D', quality: '7', beats: 2 },
+        { root: 'C', quality: 'M7', beats: 2 },                         // いくつ飛び越えたら
+        { root: 'G', quality: 'M7', beats: 2 },
+        { root: 'E', quality: 'm7', beats: 2 },                         // あの街に
+        { root: 'D', quality: '7', beats: 2 },
+        { root: 'C', quality: 'M7', beats: 2 },                         // たどり着けるの
+        { root: 'B', quality: '7', beats: 2 },
+
+        { root: 'E', quality: 'm7', beats: 2, displayText: "🎤 A-MELO 2" }, // 何も見えない
+        { root: 'D', quality: '7', beats: 2 },
+        { root: 'C', quality: 'M7', beats: 2 },                         // 夜を見上げて
+        { root: 'G', quality: 'M7', beats: 2 },
+        { root: 'A', quality: 'm7', beats: 2 },                         // 君のことを
+        { root: 'B', quality: 'm7', beats: 2 },                         // 想う...
+        { root: 'E', quality: 'm7', beats: 4 },                         // (4拍キープ)
+
+        // ====== 【Bメロ：サビに向けてじわじわと感情が高まるブリッジ】 ======
+        { root: 'C', quality: 'M7', beats: 2, displayText: "⚡ B-MELO" },   // 好きになるのは
+        { root: 'D', quality: '7', beats: 2 },                          // 簡単なのに
+        { root: 'E', quality: 'm7', beats: 4 },                         // (Em7)
+        { root: 'C', quality: 'M7', beats: 2 },                         // 同じように
+        { root: 'D', quality: '7', beats: 2 },                          // 想えない
+        { root: 'B', quality: '7', beats: 4 },                          // はがゆさ(サビ前ドミナント)
+
+        // ====== 【サビ：これぞアニソン屈指の超名サビ（涙の王道マイナー進行）】 ======
+        { root: 'C', quality: 'M7', beats: 2, displayText: "✨ SABI 1" },  // ツキアカリ
+        { root: 'D', quality: '7', beats: 2 },                          // 照らす
+        { root: 'B', quality: 'm7', beats: 2 },                         // ココロ
+        { root: 'E', quality: 'm7', beats: 2 },                         // にそっと
+        { root: 'C', quality: 'M7', beats: 2 },                         // ウソを
+        { root: 'D', quality: '7', beats: 2 },                          // ついた
+        { root: 'E', quality: 'm7', beats: 4 },                         // (Em7で一旦着地)
+
+        { root: 'C', quality: 'M7', beats: 2, displayText: "✨ SABI 2" },  // サイレン
+        { root: 'D', quality: '7', beats: 2 },                          // 流れる
+        { root: 'B', quality: 'm7', beats: 2 },                         // 夜に
+        { root: 'E', quality: 'm7', beats: 2 },                         // 静かに
+        { root: 'A', quality: 'm7', beats: 2 },                         // 涙
+        { root: 'B', quality: 'm7', beats: 2 },                         // を
+        { root: 'C', quality: 'M7', beats: 2 },                         // 隠
+        { root: 'D', quality: '7', beats: 2 },                          // した...
+        { root: 'E', quality: 'm7', beats: 4 },                         // (Em7でフィニッシュ)
+
+        // ====== 【アウトロ・ループ前の空気感保管用ブレイク】 ======
+        { rest: true, beats: 4, displayText: "🔄 LOOP WAIT" }
     ],
     virtualInsanity: [
         { root: 'E', quality: 'm7', beats: 4 }, { root: 'A', quality: '7', beats: 4 }, { root: 'D', quality: '7', beats: 4 }, { root: 'G', quality: 'M7', beats: 4 },
